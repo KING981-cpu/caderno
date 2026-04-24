@@ -1,0 +1,30 @@
+
+services:
+
+  app:
+    build: .
+    container_name: app_caderno
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - rede_sistema
+
+  db:
+    image: mariadb:10.4
+    container_name: db_caderno
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "4uB5@S6SdLz"
+      MYSQL_DATABASE: "caderno"
+    volumes:
+      - ./db_data:/var/lib/mysql
+    networks:
+      - rede_sistema
+
+networks:
+  rede_sistema:
+    driver: bridge

@@ -18,8 +18,8 @@ services:
     container_name: db_caderno
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: "4uB5@S6SdLz"
-      MYSQL_DATABASE: "caderno"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
     volumes:
       - ./db_data:/var/lib/mysql
     networks:

@@ -2,6 +2,7 @@
 .claude/
 .codex/
 .gemini/
+.env
 
 # Volumes e backups de Banco de Dados (MUITO IMPORTANTE não commitar)
 db_data/

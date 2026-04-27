@@ -17,7 +17,7 @@ $busca_termo = $_GET['busca'] ?? '';
 $data_pesquisa = $_GET['data_pesquisa'] ?? '';
 
 $busca_param = "%" . $busca_termo . "%";
-$params = ['busca' => $busca_param];
+$params = ['busca1' => $busca_param, 'busca2' => $busca_param];
 $filtro_sql = "";
 
 if (!empty($data_pesquisa)) {
@@ -44,9 +44,12 @@ $seta = ($direcao === 'ASC') ? ' ▲' : ' ▼';
 $sql_total = "SELECT COUNT(*) as total FROM movimentacao_itens i
               JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
               JOIN localidade l ON m.localidade = l.id_localidade
-              WHERE i.ativo = 1 AND (i.patrimonio LIKE :busca OR l.nome LIKE :busca) $filtro_sql";
+              WHERE i.ativo = 1 AND (i.patrimonio LIKE :busca1 OR l.nome LIKE :busca2) $filtro_sql";
 $stmt_total = $pdo->prepare($sql_total);
-$stmt_total->execute($params);
+$stmt_total->bindValue(':busca1', $params['busca1'], PDO::PARAM_STR);
+$stmt_total->bindValue(':busca2', $params['busca2'], PDO::PARAM_STR);
+if(isset($params['data_alvo'])) $stmt_total->bindValue(':data_alvo', $params['data_alvo'], PDO::PARAM_STR);
+$stmt_total->execute();
 $total_registros = $stmt_total->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 $total_paginas = ceil($total_registros / $limite);
 
@@ -142,12 +145,13 @@ function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $set
                     JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
                     JOIN localidade l ON m.localidade = l.id_localidade
                     JOIN usuario u ON m.usuario = u.id_usuario
-                    WHERE i.ativo = 1 AND (i.patrimonio LIKE :busca OR l.nome LIKE :busca) $filtro_sql
+                    WHERE i.ativo = 1 AND (i.patrimonio LIKE :busca1 OR l.nome LIKE :busca2) $filtro_sql
                     ORDER BY $coluna_sql $direcao
                     LIMIT :inicio, :limite"; 
             
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':busca', $params['busca'], PDO::PARAM_STR);
+            $stmt->bindValue(':busca1', $params['busca1'], PDO::PARAM_STR);
+            $stmt->bindValue(':busca2', $params['busca2'], PDO::PARAM_STR);
             if(isset($params['data_alvo'])) $stmt->bindValue(':data_alvo', $params['data_alvo'], PDO::PARAM_STR);
             $stmt->bindValue(':inicio', (int)$inicio, PDO::PARAM_INT);
             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);

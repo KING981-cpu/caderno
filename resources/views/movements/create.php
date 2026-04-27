@@ -37,26 +37,14 @@
         <input type="date" name="entrada" required value="<?php echo date('Y-m-d'); ?>">
 
         <label>Localidade:</label>
-        <div class="input-group">
-            <div class="autocomplete-container">
-                <input type="text" id="busca_local" placeholder="Buscar local..." autocomplete="off">
-                <div id="lista_local" class="autocomplete-list"></div>
-                <input type="hidden" name="localidade" id="id_localidade">
-            </div>
-            <button type="button" class="btn-add" onclick="abrirModal('modalLocal')">+</button>
-        </div>
+        <div id="localidades-container"></div>
+        <button type="button" class="btn-add" onclick="adicionarLocalidade()" style="width: 45px; height: 38px; margin-top: 10px;">+</button>
 
-        <label>Usuário:</label>
-        <div class="input-group">
-            <div class="autocomplete-container">
-                <input type="text" id="busca_user" placeholder="Buscar usuário..." autocomplete="off">
-                <div id="lista_user" class="autocomplete-list"></div>
-                <input type="hidden" name="usuario" id="id_usuario">
-            </div>
-            <button type="button" class="btn-add" onclick="abrirModal('modalUser')">+</button>
-        </div>
+        <label style="margin-top: 20px;">Usuário:</label>
+        <div id="usuarios-container"></div>
+        <button type="button" class="btn-add" onclick="adicionarUsuario()" style="width: 45px; height: 38px; margin-top: 10px;">+</button>
 
-        <label style="margin-top:20px;">Assinatura:</label>
+        <label style="margin-top:30px;">Assinatura:</label>
         <div class="signature-wrapper"><canvas id="signature-pad"></canvas></div>
         <button type="button" onclick="signaturePad.clear()" style="width:100%; cursor:pointer;">Limpar Assinatura</button>
         <input type="hidden" name="assinatura_data" id="assinatura_data">
@@ -64,104 +52,220 @@
     </form>
 </div>
 
-<div id="modalLocal" class="modal">
-    <div class="modal-content">
-        <h4>Novo Local</h4>
-        <input type="text" id="novo_nome_local">
-        <button type="button" onclick="salvarRapido('localidade', 'novo_nome_local', 'busca_local', 'id_localidade', 'modalLocal')" style="background:#27ae60; color:white; border:none; padding:10px; width:100%; margin-top:10px; border-radius:4px; cursor:pointer;">Cadastrar</button>
-        <button type="button" onclick="fecharModal('modalLocal')" style="margin-top:5px; width:100%; cursor:pointer;">Fechar</button>
-    </div>
-</div>
 
-<div id="modalUser" class="modal">
-    <div class="modal-content">
-        <h4>Novo Usuário</h4>
-        <input type="text" id="novo_nome_user">
-        <button type="button" onclick="salvarRapido('usuario', 'novo_nome_user', 'busca_user', 'id_usuario', 'modalUser')" style="background:#27ae60; color:white; border:none; padding:10px; width:100%; margin-top:10px; border-radius:4px; cursor:pointer;">Cadastrar</button>
-        <button type="button" onclick="fecharModal('modalUser')" style="margin-top:5px; width:100%; cursor:pointer;">Fechar</button>
-    </div>
-</div>
 
 <script>
-    // CARREGA DADOS DO BANCO
     let localidades = [<?php foreach($localidades ?? [] as $l) { echo "{id:'".$l['id_localidade']."', nome:'".addslashes($l['nome'])."'},"; } ?>];
     let usuarios = [<?php foreach($usuarios ?? [] as $u) { echo "{id:'".$u['id_usuario']."', nome:'".addslashes($u['nome'])."'},"; } ?>];
+    
+    // Armazena os IDs selecionados
+    let localidadesSelecionadas = [];
+    let usuariosSelecionados = [];
 
-    function iniciarBusca(inputId, listaId, hiddenId, dadosFonte) {
+    // Cria autocomplete para um campo
+    function criarAutocomplete(inputId, listaId, dadosFonte, onSelect) {
         const input = document.getElementById(inputId);
         const lista = document.getElementById(listaId);
-        const hidden = document.getElementById(hiddenId);
 
         input.addEventListener('input', function() {
-            const valor = this.value.toLowerCase();
+            const valor = this.value.toLowerCase().trim();
             lista.innerHTML = '';
-            if (!valor) { hidden.value = ''; return; }
-            const filtrados = dadosFonte.filter(item => item.nome.toLowerCase().startsWith(valor));
+            if (!valor) return;
+            
+            const filtrados = dadosFonte.filter(item => 
+                item.nome.toLowerCase().includes(valor)
+            );
+            
             filtrados.forEach(item => {
                 const div = document.createElement('div');
-                div.innerHTML = item.nome; div.classList.add('autocomplete-item');
-                div.onclick = () => { input.value = item.nome; hidden.value = item.id; lista.innerHTML = ''; };
+                div.className = 'autocomplete-item';
+                div.textContent = item.nome;
+                div.onclick = () => {
+                    onSelect(item);
+                    input.value = '';
+                    lista.innerHTML = '';
+                };
                 lista.appendChild(div);
             });
         });
-        document.addEventListener('click', (e) => { if (e.target !== input) lista.innerHTML = ''; });
-    }
 
-    iniciarBusca('busca_local', 'lista_local', 'id_localidade', localidades);
-    iniciarBusca('busca_user', 'lista_user', 'id_usuario', usuarios);
-
-    const canvas = document.getElementById('signature-pad');
-    const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
-    function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio); signaturePad.clear();
-    }
-    window.addEventListener("load", resizeCanvas);
-
-    function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
-    function fecharModal(id) { 
-        document.getElementById(id).style.display = 'none'; 
-        const input = document.getElementById(id).getElementsByTagName('input')[0];
-        if(input) input.value = '';
-    }
-
-    function salvarRapido(tabela, nomeInputId, txtInputId, hiddenId, modalId) {
-        const inputNovoNome = document.getElementById(nomeInputId);
-        const nome = inputNovoNome.value.trim();
-        if(!nome) return alert("Digite um nome!");
-
-        const baseDados = (tabela === 'localidade') ? localidades : usuarios;
-        const existe = baseDados.some(item => item.nome.toLowerCase() === nome.toLowerCase());
-        
-        if(existe) {
-            alert("Erro: Este nome já está cadastrado no sistema!");
-            return;
-        }
-
-        fetch('cadastrar_rapido', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `tabela=${tabela}&nome=${encodeURIComponent(nome)}`
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.id) {
-                const novoItem = {id: data.id, nome: nome};
-                if(tabela === 'localidade') localidades.push(novoItem); else usuarios.push(novoItem);
-                document.getElementById(txtInputId).value = nome;
-                document.getElementById(hiddenId).value = data.id;
-                inputNovoNome.value = '';
-                fecharModal(modalId);
-            } else {
-                alert(data.error || "Erro ao cadastrar.");
+        document.addEventListener('click', (e) => { 
+            if (e.target !== input && !lista.contains(e.target)) {
+                lista.innerHTML = ''; 
             }
         });
     }
 
+    // Adiciona nova linha de localidade
+    function adicionarLocalidade() {
+        const container = document.getElementById('localidades-container');
+        const id = 'localidade_' + Date.now();
+        const idLista = id + '_lista';
+        
+        const div = document.createElement('div');
+        div.className = 'input-group';
+        div.innerHTML = `
+            <div class="autocomplete-container" style="flex: 1;">
+                <input type="text" id="${id}" placeholder="Buscar ou digitar localidade..." autocomplete="off">
+                <div id="${idLista}" class="autocomplete-list"></div>
+            </div>
+            <button type="button" class="btn-add" onclick="confirmarLocalidade('${id}')">✓</button>
+        `;
+        container.appendChild(div);
+        
+        criarAutocomplete(id, idLista, localidades, (item) => {
+            document.getElementById(id).value = item.nome;
+            confirmarLocalidade(id, item.id);
+        });
+        
+        document.getElementById(id).focus();
+    }
+
+    function confirmarLocalidade(inputId, itemId = null) {
+        const input = document.getElementById(inputId);
+        const nome = input.value.trim();
+        
+        if (!nome) return alert("Digite uma localidade!");
+
+        // Se não foi selecionado da lista, criar novo
+        if (!itemId) {
+            const existe = localidades.some(l => l.nome.toLowerCase() === nome.toLowerCase());
+            if (existe) {
+                itemId = localidades.find(l => l.nome.toLowerCase() === nome.toLowerCase()).id;
+            } else {
+                // Cadastrar novo
+                fetch('cadastrar_rapido', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `tabela=localidade&nome=${encodeURIComponent(nome)}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        itemId = data.id;
+                        localidades.push({id: itemId, nome: nome});
+                        adicionarLocalidadeConfirmada(itemId, nome, inputId);
+                    } else {
+                        alert(data.error || "Erro ao cadastrar localidade");
+                    }
+                });
+                return;
+            }
+        }
+        
+        adicionarLocalidadeConfirmada(itemId, nome, inputId);
+    }
+
+    function adicionarLocalidadeConfirmada(id, nome, inputId) {
+        const input = document.getElementById(inputId);
+        const container = input.closest('.input-group');
+        
+        // Criar tag da localidade selecionada
+        const tag = document.createElement('div');
+        tag.className = 'localidade-tag';
+        tag.style.cssText = 'display: inline-block; background: #27ae60; color: white; padding: 5px 10px; border-radius: 4px; margin: 5px 5px 5px 0; position: relative;';
+        tag.innerHTML = `${nome} <input type="hidden" name="localidade" value="${id}"> <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; margin-left: 5px;">✕</button>`;
+        
+        container.parentElement.insertBefore(tag, container);
+        container.remove();
+    }
+
+    // Adiciona nova linha de usuário
+    function adicionarUsuario() {
+        const container = document.getElementById('usuarios-container');
+        const id = 'usuario_' + Date.now();
+        const idLista = id + '_lista';
+        
+        const div = document.createElement('div');
+        div.className = 'input-group';
+        div.innerHTML = `
+            <div class="autocomplete-container" style="flex: 1;">
+                <input type="text" id="${id}" placeholder="Buscar ou digitar usuário..." autocomplete="off">
+                <div id="${idLista}" class="autocomplete-list"></div>
+            </div>
+            <button type="button" class="btn-add" onclick="confirmarUsuario('${id}')">✓</button>
+        `;
+        container.appendChild(div);
+        
+        criarAutocomplete(id, idLista, usuarios, (item) => {
+            document.getElementById(id).value = item.nome;
+            confirmarUsuario(id, item.id);
+        });
+        
+        document.getElementById(id).focus();
+    }
+
+    function confirmarUsuario(inputId, itemId = null) {
+        const input = document.getElementById(inputId);
+        const nome = input.value.trim();
+        
+        if (!nome) return alert("Digite um usuário!");
+
+        if (!itemId) {
+            const existe = usuarios.some(u => u.nome.toLowerCase() === nome.toLowerCase());
+            if (existe) {
+                itemId = usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase()).id;
+            } else {
+                fetch('cadastrar_rapido', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `tabela=usuario&nome=${encodeURIComponent(nome)}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        itemId = data.id;
+                        usuarios.push({id: itemId, nome: nome});
+                        adicionarUsuarioConfirmado(itemId, nome, inputId);
+                    } else {
+                        alert(data.error || "Erro ao cadastrar usuário");
+                    }
+                });
+                return;
+            }
+        }
+        
+        adicionarUsuarioConfirmado(itemId, nome, inputId);
+    }
+
+    function adicionarUsuarioConfirmado(id, nome, inputId) {
+        const input = document.getElementById(inputId);
+        const container = input.closest('.input-group');
+        
+        const tag = document.createElement('div');
+        tag.className = 'usuario-tag';
+        tag.style.cssText = 'display: inline-block; background: #3498db; color: white; padding: 5px 10px; border-radius: 4px; margin: 5px 5px 5px 0; position: relative;';
+        tag.innerHTML = `${nome} <input type="hidden" name="usuario" value="${id}"> <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; margin-left: 5px;">✕</button>`;
+        
+        container.parentElement.insertBefore(tag, container);
+        container.remove();
+    }
+
+    function removerUsuario(inputId) {
+        document.getElementById(inputId).closest('.input-group').remove();
+    }
+
+    // Inicializa com uma linha de cada
+    
+    const canvas = document.getElementById('signature-pad');
+    const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+    
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio; 
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio); 
+        signaturePad.clear();
+    }
+    
+    window.addEventListener("load", resizeCanvas);
+
     document.getElementById('formMovimentacao').onsubmit = function(e) {
-        if (signaturePad.isEmpty() || !document.getElementById('id_localidade').value || !document.getElementById('id_usuario').value) {
-            alert("Preencha todos os campos e assine!");
+        const localidades = document.querySelectorAll('input[name="localidade"]');
+        const usuarios = document.querySelectorAll('input[name="usuario"]');
+        
+        if (signaturePad.isEmpty() || localidades.length === 0 || usuarios.length === 0) {
+            alert("Preencha localidade, usuário e assine!");
             e.preventDefault();
         } else {
             document.getElementById('assinatura_data').value = signaturePad.toDataURL();

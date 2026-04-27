@@ -83,12 +83,23 @@ class MovementController extends BaseController
         }
 
         try {
+            $localidade = $this->request->get('localidade');
+            $usuario = $this->request->get('usuario');
+            
+            // Se vier como array, usa o primeiro
+            if (is_array($localidade)) {
+                $localidade = !empty($localidade) ? $localidade[0] : null;
+            }
+            if (is_array($usuario)) {
+                $usuario = !empty($usuario) ? $usuario[0] : null;
+            }
+
             $movId = $this->movementService->create([
                 'tipo' => $this->request->get('tipo', 'Entrada'),
                 'patrimonio' => $this->request->get('patrimonio', ''),
                 'data' => $this->request->get('data', date('Y-m-d')),
-                'localidade' => $this->request->get('localidade'),
-                'usuario' => $this->request->get('usuario'),
+                'localidade' => $localidade,
+                'usuario' => $usuario,
                 'assinatura' => $this->request->get('assinatura_data'),
                 'observacao' => $this->request->get('observacao', ''),
             ]);

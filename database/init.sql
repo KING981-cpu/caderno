@@ -27,7 +27,7 @@ CREATE TABLE `localidade` (
   `nome` varchar(255) NOT NULL,
   PRIMARY KEY (`id_localidade`),
   UNIQUE KEY `nome` (`nome`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -36,7 +36,7 @@ CREATE TABLE `localidade` (
 
 LOCK TABLES `localidade` WRITE;
 /*!40000 ALTER TABLE `localidade` DISABLE KEYS */;
-INSERT INTO `localidade` VALUES (3,'11212'),(1,'Almoxarifado'),(5,'asdasda'),(2,'Escritório'),(4,'saadsd');
+INSERT INTO `localidade` VALUES (3,'11212'),(1,'Almoxarifado'),(5,'asdasda'),(6,'asdasdas'),(2,'Escritório'),(4,'saadsd');
 /*!40000 ALTER TABLE `localidade` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -111,7 +111,6 @@ CREATE TABLE `usuario` (
   `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) NOT NULL,
   `cpf` varchar(20) DEFAULT NULL,
-  `senha` varchar(255) NOT NULL,
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `cpf` (`cpf`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
@@ -123,7 +122,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'Admin','123','123');
+INSERT INTO `usuario` VALUES (1,'Admin','123');
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -136,4 +135,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-27 16:32:08
+-- Dump completed on 2026-04-27 18:46:11

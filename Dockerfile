@@ -9,16 +9,27 @@ RUN a2enmod rewrite
 # Configure Apache for clean URLs
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Set the document root to public/
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/default-ssl.conf
+# Create application directories first (before COPY)
+RUN mkdir -p /var/www/html && \
+    mkdir -p /var/log/caderno
 
-# Create application directories and set permissions
+# Copy application files
 COPY . /var/www/html/
 
+# Set the document root to public/ (after COPY so path exists)
+RUN sed -i 's|DocumentRoot /var/www/html$|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's|DocumentRoot /var/www/html$|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/default-ssl.conf
+
+# Add rewrite rules for clean URLs
+RUN echo '<Directory /var/www/html/public>' >> /etc/apache2/apache2.conf && \
+    echo '    AllowOverride All' >> /etc/apache2/apache2.conf && \
+    echo '    Options Indexes FollowSymLinks' >> /etc/apache2/apache2.conf && \
+    echo '    Require all granted' >> /etc/apache2/apache2.conf && \
+    echo '</Directory>' >> /etc/apache2/apache2.conf
+
+# Set permissions
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html && \
-    mkdir -p /var/log/caderno && \
     chown www-data:www-data /var/log/caderno
 
 # Health check

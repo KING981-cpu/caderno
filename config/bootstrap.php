@@ -27,9 +27,15 @@ if (file_exists($envPath)) {
 }
 
 // Setup error handling and logging
-\App\SRE\Logger::initPath();
-\App\SRE\ErrorHandler::register();
-\App\SRE\Middleware::logRequest();
+if (class_exists(\App\SRE\Logger::class)) {
+    \App\SRE\Logger::initPath();
+}
+if (class_exists(\App\SRE\ErrorHandler::class)) {
+    \App\SRE\ErrorHandler::register();
+}
+if (class_exists(\App\SRE\Middleware::class)) {
+    \App\SRE\Middleware::logRequest();
+}
 
 // Set default timezone
 date_default_timezone_set(getenv('TIMEZONE') ?: 'America/Sao_Paulo');

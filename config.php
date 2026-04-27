@@ -1,14 +1,17 @@
-
 <?php
-$host = 'db';
-$db   = 'caderno';
-$user = 'root';
-$pass = '4uB5@S6SdLz';   
+$host = getenv('DB_HOST') ?: 'db';
+$db   = getenv('DB_NAME') ?: 'caderno';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO("mysql:host={$host};dbname={$db};charset=utf8mb4", $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
 } catch (PDOException $e) {
-    die("Erro ao conectar: " . $e->getMessage());
+    error_log('Erro ao conectar ao banco: ' . $e->getMessage());
+    http_response_code(500);
+    exit('Erro ao conectar ao banco.');
 }
 ?>

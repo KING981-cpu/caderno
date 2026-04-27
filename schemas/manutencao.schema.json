@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/manutencao.schema.json",
+  "title": "Manutencao",
+  "type": "object",
+  "description": "Registro de intervenção técnica/ocorrência de manutenção",
+  "required": ["id", "equipamentoId", "inicio", "status"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "equipamentoId": { "type": "string", "format": "uuid" },
+    "inicio": { "type": "string", "format": "date-time" },
+    "termino": { "type": ["string", "null"], "format": "date-time" },
+    "descricao": { "type": "string" },
+    "tecnico": { "type": ["string", "null"] },
+    "custo": { "type": ["number", "null"], "minimum": 0 },
+    "status": { "type": "string", "enum": ["planned", "in_progress", "completed", "cancelled"] }
+  },
+  "additionalProperties": false
+}

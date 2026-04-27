@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/equipamento.schema.json",
+  "title": "Equipamento",
+  "type": "object",
+  "description": "Registro de um ativo de TI",
+  "required": ["id", "tipo", "fabricante", "numeroSerie", "dataCadastro"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid", "description": "UUID do registro" },
+    "codigo": { "type": "string", "description": "Código patrimonial/etiqueta (único quando presente)" },
+    "tipo": { "type": "string", "description": "Tipo do equipamento (ex: notebook, desktop, impressora)" },
+    "fabricante": { "type": "string" },
+    "modelo": { "type": "string" },
+    "numeroSerie": { "type": "string", "description": "Número de série (preferencialmente único)" },
+    "patrimonio": { "type": "string", "description": "Número de patrimônio (se houver)" },
+    "estado": {
+      "type": "string",
+      "enum": ["disponivel", "em_uso", "em_manutencao", "inativo", "perdido"],
+      "default": "disponivel"
+    },
+    "localId": { "type": "string", "format": "uuid", "description": "Referência ao Local" },
+    "responsavelId": { "type": "string", "format": "uuid", "description": "Referência ao Usuário responsável" },
+    "dataCadastro": { "type": "string", "format": "date-time" },
+    "observacoes": { "type": "string" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "codigo": "EQP-2024-0012",
+      "tipo": "notebook",
+      "fabricante": "Lenovo",
+      "modelo": "ThinkPad T14",
+      "numeroSerie": "SN123456",
+      "patrimonio": "PT-10012",
+      "estado": "disponivel",
+      "localId": "d9f1c0b8-9a8b-4a6a-9b2c-a1b2c3d4e5f6",
+      "responsavelId": "a1b2c3d4-1111-2222-3333-444455556666",
+      "dataCadastro": "2024-10-01T09:12:00Z"
+    }
+  ]
+}

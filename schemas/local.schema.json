@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/local.schema.json",
+  "title": "Local",
+  "type": "object",
+  "description": "Local físico onde o equipamento é mantido",
+  "required": ["id", "nome", "tipo"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "nome": { "type": "string" },
+    "endereco": { "type": ["string", "null"] },
+    "contato": { "type": ["string", "null"] },
+    "tipo": { "type": "string", "enum": ["almoxarifado", "setor", "sala", "externo"] },
+    "responsavelId": { "type": ["string", "null"], "format": "uuid" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/movimentacao.schema.json",
+  "title": "Movimentacao",
+  "type": "object",
+  "description": "Registro de entrada/saída/transferência/manutenção do equipamento",
+  "required": ["id", "equipamentoId", "tipo", "dataHora", "usuarioResponsavelId"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "equipamentoId": { "type": "string", "format": "uuid" },
+    "tipo": {
+      "type": "string",
+      "enum": ["checkout", "checkin", "transfer", "maintenance"],
+      "description": "Tipo de movimentação"
+    },
+    "origemLocalId": { "type": ["string", "null"], "format": "uuid" },
+    "destinoLocalId": { "type": ["string", "null"], "format": "uuid" },
+    "usuarioResponsavelId": { "type": "string", "format": "uuid" },
+    "dataHora": { "type": "string", "format": "date-time" },
+    "condicaoAtual": { "type": "string", "enum": ["ok", "danificado", "sem_funcionamento"], "default": "ok" },
+    "observacao": { "type": "string" },
+    "referenciaDocumento": { "type": "string" },
+    "anteriorMovimentacaoId": { "type": ["string", "null"], "format": "uuid" }
+  },
+  "additionalProperties": false
+}

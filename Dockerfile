@@ -1,17 +1,28 @@
-FROM php:7.4-apache
+FROM php:8.2-apache
 
-# Instala extensões necessárias para o MySQL/MariaDB
+# Install necessary extensions for MySQL/MariaDB
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-# Habilita o mod_rewrite do Apache
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# ADICIONE ESTA LINHA AQUI:
-# Resolve o aviso "Could not reliably determine the server's fully qualified domain name"
+# Configure Apache for clean URLs
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Define o diretório de trabalho e copia os arquivos
+# Set the document root to public/
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/default-ssl.conf
+
+# Create application directories and set permissions
 COPY . /var/www/html/
 
-# Dá permissão para a pasta
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html && \
+    mkdir -p /var/log/caderno && \
+    chown www-data:www-data /var/log/caderno
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
+
+WORKDIR /var/www/html

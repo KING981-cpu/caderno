@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: Caderno - API (esboço)
+  version: "0.1.0"
+  description: API para gerenciamento de equipamentos, movimentações, usuários e locais. Não altera layout/infra existente.
+servers:
+  - url: https://api.exemplo.local
+    description: Servidor de exemplo
+security:
+  - bearerAuth: []
+paths:
+  /equipamentos:
+    get:
+      summary: Listar equipamentos
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: size
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista paginada de equipamentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Equipamento'
+                  total:
+                    type: integer
+    post:
+      summary: Criar novo equipamento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipamentoCreate'
+      responses:
+        '201':
+          description: Equipamento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipamento'
+  /equipamentos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Obter equipamento por id
+      responses:
+        '200':
+          description: Equipamento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipamento'
+        '404':
+          description: Não encontrado
+    put:
+      summary: Atualizar equipamento (substituir)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipamentoUpdate'
+      responses:
+        '200':
+          description: Equipamento atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipamento'
+    patch:
+      summary: Atualizar parcialmente equipamento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipamentoUpdate'
+      responses:
+        '200':
+          description: Atualização parcial aplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipamento'
+    delete:
+      summary: Marcar equipamento como inativo
+      responses:
+        '204':
+          description: Removido/logicamente inativado
+
+  /movimentacoes:
+    get:
+      summary: Listar movimentações
+      parameters:
+        - in: query
+          name: equipamentoId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: periodoInicio
+          schema: { type: string, format: date-time }
+        - in: query
+          name: periodoFim
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Lista de movimentações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movimentacao'
+    post:
+      summary: Registrar movimentação (checkin/checkout/transfer/manutenção)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Movimentacao'
+      responses:
+        '201':
+          description: Movimentação criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimentacao'
+
+  /usuarios:
+    get:
+      summary: Listar usuários
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+    post:
+      summary: Criar usuário (registro mínimo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioCreate'
+      responses:
+        '201':
+          description: Usuário criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+
+  /locais:
+    get:
+      summary: Listar locais
+      responses:
+        '200':
+          description: Lista de locais
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Local'
+    post:
+      summary: Criar local
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Local'
+      responses:
+        '201':
+          description: Local criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Local'
+
+  /manutencoes:
+    get:
+      summary: Listar manutenções
+      responses:
+        '200':
+          description: Lista de manutenções
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manutencao'
+    post:
+      summary: Registrar manutenção
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Manutencao'
+      responses:
+        '201':
+          description: Manutenção criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manutencao'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Equipamento:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        codigo: { type: string }
+        tipo: { type: string }
+        fabricante: { type: string }
+        modelo: { type: string }
+        numeroSerie: { type: string }
+        patrimonio: { type: string }
+        estado:
+          type: string
+          enum: [disponivel, em_uso, em_manutencao, inativo, perdido]
+        localId: { type: string, format: uuid, nullable: true }
+        responsavelId: { type: string, format: uuid, nullable: true }
+        dataCadastro: { type: string, format: date-time }
+        observacoes: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [id, tipo, fabricante, numeroSerie, dataCadastro]
+
+    EquipamentoCreate:
+      type: object
+      properties:
+        codigo: { type: string }
+        tipo: { type: string }
+        fabricante: { type: string }
+        modelo: { type: string }
+        numeroSerie: { type: string }
+        patrimonio: { type: string, nullable: true }
+        localId: { type: string, format: uuid, nullable: true }
+        responsavelId: { type: string, format: uuid, nullable: true }
+        observacoes: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [tipo, fabricante, numeroSerie]
+
+    EquipamentoUpdate:
+      type: object
+      properties:
+        codigo: { type: string }
+        tipo: { type: string }
+        fabricante: { type: string }
+        modelo: { type: string }
+        numeroSerie: { type: string }
+        patrimonio: { type: string, nullable: true }
+        estado:
+          type: string
+          enum: [disponivel, em_uso, em_manutencao, inativo, perdido]
+        localId: { type: string, format: uuid, nullable: true }
+        responsavelId: { type: string, format: uuid, nullable: true }
+        observacoes: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+
+    Movimentacao:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        equipamentoId: { type: string, format: uuid }
+        tipo:
+          type: string
+          enum: [checkout, checkin, transfer, maintenance]
+        origemLocalId: { type: string, format: uuid, nullable: true }
+        destinoLocalId: { type: string, format: uuid, nullable: true }
+        usuarioResponsavelId: { type: string, format: uuid }
+        dataHora: { type: string, format: date-time }
+        condicaoAtual:
+          type: string
+          enum: [ok, danificado, sem_funcionamento]
+        observacao: { type: string, nullable: true }
+        referenciaDocumento: { type: string, nullable: true }
+        anteriorMovimentacaoId: { type: string, format: uuid, nullable: true }
+      required: [id, equipamentoId, tipo, dataHora, usuarioResponsavelId]
+
+    Usuario:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        matricula: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+        telefone: { type: string, nullable: true }
+        perfil:
+          type: string
+          enum: [analista, operador, auditor, admin]
+        ativo: { type: boolean, default: true }
+        departamento: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [id, nome, perfil, ativo]
+
+    UsuarioCreate:
+      type: object
+      properties:
+        nome: { type: string }
+        matricula: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+        telefone: { type: string, nullable: true }
+        perfil:
+          type: string
+          enum: [analista, operador, auditor, admin]
+        ativo: { type: boolean, default: true }
+      required: [nome, perfil]
+
+    Local:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        endereco: { type: string, nullable: true }
+        contato: { type: string, nullable: true }
+        tipo:
+          type: string
+          enum: [almoxarifado, setor, sala, externo]
+        responsavelId: { type: string, format: uuid, nullable: true }
+      required: [id, nome, tipo]
+
+    Manutencao:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        equipamentoId: { type: string, format: uuid }
+        inicio: { type: string, format: date-time }
+        termino: { type: string, format: date-time, nullable: true }
+        descricao: { type: string, nullable: true }
+        tecnico: { type: string, nullable: true }
+        custo: { type: number, minimum: 0, nullable: true }
+        status:
+          type: string
+          enum: [planned, in_progress, completed, cancelled]
+      required: [id, equipamentoId, inicio, status]

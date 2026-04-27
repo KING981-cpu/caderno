@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/usuario.schema.json",
+  "title": "Usuario",
+  "type": "object",
+  "description": "Identidade de um usuário do sistema",
+  "required": ["id", "nome", "perfil", "ativo"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "nome": { "type": "string" },
+    "matricula": { "type": ["string", "null"], "description": "Código funcional/matrícula" },
+    "email": { "type": ["string", "null"], "format": "email" },
+    "telefone": { "type": ["string", "null"] },
+    "perfil": { "type": "string", "enum": ["analista", "operador", "auditor", "admin"] },
+    "ativo": { "type": "boolean", "default": true },
+    "departamento": { "type": ["string", "null"] },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

@@ -9,3 +9,4 @@ db_data/
 
 # Artefatos e configurações locais do OpenSpec
 openspec/
+/db_data

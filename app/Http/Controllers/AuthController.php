@@ -36,19 +36,26 @@ class AuthController extends BaseController
             if ($user) {
                 $this->authService->startSession($user);
                 Logger::info('User login successful', ['user_id' => $user['id_usuario']]);
-                $this->redirect('index.php');
+                $this->redirect('/');
+                return;
             }
 
             Logger::warning('Login attempt failed for CPF: ' . $cpf);
-            echo "<script>alert('CPF ou Senha incorretos!'); window.location.href='/caderno/login';</script>";
+            $this->view('auth/login', [
+                'error' => 'CPF ou Senha incorretos!'
+            ]);
+            return;
         }
+
+        // GET request - show login form
+        $this->view('auth/login');
     }
 
     public function logout(): void
     {
         $this->authService->endSession();
         Logger::info('User logged out');
-        $this->redirect('/caderno/login');
+        $this->redirect('/login');
     }
 
     public function requireAuth(): void

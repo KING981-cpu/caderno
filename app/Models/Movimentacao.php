@@ -27,7 +27,7 @@ class Movimentacao extends BaseModel
 
     public function getAll(int $limit = 10, int $offset = 0, array $filters = []): array
     {
-        $where = "WHERE m.ativo = 1";
+        $where = "WHERE i.ativo = 1";
         $params = [];
 
         if (!empty($filters['search'])) {

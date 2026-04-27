@@ -86,7 +86,7 @@ class MovementController extends BaseController
             $movId = $this->movementService->create([
                 'tipo' => $this->request->get('tipo', 'Entrada'),
                 'patrimonio' => $this->request->get('patrimonio', ''),
-                'data' => $this->request->get('entrada', date('Y-m-d')),
+                'data' => $this->request->get('data', date('Y-m-d')),
                 'localidade' => $this->request->get('localidade'),
                 'usuario' => $this->request->get('usuario'),
                 'assinatura' => $this->request->get('assinatura_data'),
@@ -94,7 +94,7 @@ class MovementController extends BaseController
             ]);
 
             Logger::info('Movement created via controller', ['id' => $movId]);
-            echo "<script>alert('Salvo com sucesso!'); window.location.href='/caderno/';</script>";
+            $this->redirect('/');
         } catch (\Exception $e) {
             Logger::error('Movement creation failed: ' . $e->getMessage());
             echo "Erro ao salvar: " . htmlspecialchars($e->getMessage());
@@ -105,7 +105,7 @@ class MovementController extends BaseController
     {
         $id = $this->request->get('id');
         if (!$id) {
-            $this->redirect('/caderno/');
+            $this->redirect('/');
         }
 
         $item = $this->movementService->getItemDetails($id);
@@ -146,7 +146,7 @@ class MovementController extends BaseController
             ]);
 
             Logger::info('Movement updated via controller', ['id' => $movId]);
-            echo "<script>alert('Atualizado com sucesso!'); window.location.href='/caderno/';</script>";
+            $this->redirect('/');
         } catch (\Exception $e) {
             Logger::error('Movement update failed: ' . $e->getMessage());
             echo "Erro ao atualizar: " . htmlspecialchars($e->getMessage());
@@ -175,7 +175,7 @@ class MovementController extends BaseController
             try {
                 $this->movementService->recordSaida($patrimonio, $dataSaida);
                 Logger::info('Saida recorded via controller', ['patrimonio' => $patrimonio]);
-                echo "<script>alert('Saída registrada com sucesso!'); window.location.href='/caderno/';</script>";
+                $this->redirect('/');
             } catch (\Exception $e) {
                 Logger::error('Saida recording failed: ' . $e->getMessage());
                 echo "Erro ao registrar saída: " . htmlspecialchars($e->getMessage());
@@ -189,13 +189,13 @@ class MovementController extends BaseController
     {
         $id = (int)$this->request->get('id_item');
         if (!$id) {
-            $this->redirect('/caderno/');
+            $this->redirect('/');
         }
 
         try {
             $this->movementService->delete($id);
             Logger::info('Item deleted via controller', ['id' => $id]);
-            echo "<script>alert('Registro desativado com sucesso!'); window.location.href='/caderno/';</script>";
+            $this->redirect('/');
         } catch (\Exception $e) {
             Logger::error('Item deletion failed: ' . $e->getMessage());
             echo "Erro ao processar: " . htmlspecialchars($e->getMessage());

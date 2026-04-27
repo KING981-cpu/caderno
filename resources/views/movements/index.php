@@ -84,13 +84,11 @@ if (file_exists($headerPath)) {
         <tbody>
             <?php foreach ($movements ?? [] as $row): ?>
                 <?php
-                $entrada = ($row['data_entrada'] ?? null) ? date('d/m/Y', strtotime($row['data_entrada'])) : "---";
-                $assinatura = (!empty($row['assinatura']) && $row['assinatura'] !== "0") 
-                              ? "<img src='" . e($row['assinatura']) . "' class='img-assinatura' onclick='ampliarAssinatura(this.src)'>" 
-                              : "---";
+                $entrada = "---";
+                $assinatura = "---";
                 ?>
                 <tr>
-                    <td><strong><?php echo e($row['patrimonio'] ?? ''); ?></strong></td>
+                    <td><strong><?php echo e($row['patrimonios'] ?? ''); ?></strong></td>
                     <td><span class='badge-tipo'><?php echo e($row['tipo'] ?? ''); ?></span></td>
                     <td><?php echo $entrada; ?></td>
                     <td>---</td>
@@ -99,7 +97,7 @@ if (file_exists($headerPath)) {
                     <td><?php echo $assinatura; ?></td>
                     <td>
                         <a href='editar?id=<?php echo $row['id_movimentacao']; ?>' style='color:#2980b9; text-decoration:none;'>Editar</a> | 
-                        <a href='deletar?id_item=<?php echo $row['id_itens'] ?? ''; ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
+                        <a href='deletar?id_item=<?php echo $row['id_movimentacao']; ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

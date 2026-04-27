@@ -23,11 +23,11 @@ The Caderno Digital PHP application has been successfully refactored from a mono
 | Controllers | 5 |
 | Core Classes | 4 |
 | SRE Components | 4 |
-| Views/Templates | 7 |
+| Views/Templates | 6 |
 | Documentation Files | 4 |
 | Test Files | 2 |
 | Configuration Files | 4 |
-| **Total PHP Files** | **34** |
+| **Total PHP Files** | **33** |
 
 ---
 
@@ -53,7 +53,6 @@ vendor/                   ✅ PSR-4 autoloader
 ### ✅ Views & Templates
 ```
 resources/views/
-├── auth/                ✅ login.php
 ├── movements/           ✅ index, create, edit, pending, saida
 └── includes/            ✅ header.php
 ```
@@ -321,8 +320,7 @@ docker-compose.yml      ✅ Updated with env vars, health checks
 - app/SRE/HealthCheck.php
 - app/SRE/Middleware.php
 
-### Views (7)
-- resources/views/auth/login.php
+### Views (6)
 - resources/views/movements/index.php
 - resources/views/movements/create.php
 - resources/views/movements/edit.php

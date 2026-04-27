@@ -40,7 +40,7 @@ services:
     networks:
       - rede_sistema
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
       interval: 10s
       timeout: 3s
       retries: 3

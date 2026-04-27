@@ -3,7 +3,6 @@
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\ReferenceController;
@@ -12,11 +11,20 @@ use App\SRE\Logger;
 
 // Get the requested path
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Detect base path dynamically - handle both /caderno/ and / (Docker deployment)
 $basePath = '/';
+if (strpos($requestPath, '/caderno/') === 0) {
+    $basePath = '/caderno/';
+}
+
 $route = str_replace($basePath, '', $requestPath);
 
-// Remove trailing slash
+// Remove trailing slash and .php extension
 $route = rtrim($route, '/');
+if (substr($route, -4) === '.php') {
+    $route = substr($route, 0, -4);
+}
 
 // Route the request
 try {
@@ -47,85 +55,50 @@ try {
         }
     }
 
-    // Authentication routes
-    elseif ($route === 'autenticar' || $route === 'autenticar.php') {
-        $controller = new AuthController();
-        $controller->login();
-    }
-
-    elseif ($route === 'sair' || $route === 'sair.php') {
-        $controller = new AuthController();
-        $controller->logout();
-    }
-
     // Movement routes
-    elseif ($route === 'index' || $route === 'index.php' || $route === '') {
+    elseif ($route === 'index' || $route === '') {
         $controller = new MovementController();
-        // Require authentication
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->index();
     }
 
-    elseif ($route === 'cadastro' || $route === 'cadastro.php') {
+    elseif ($route === 'cadastro') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->create();
     }
 
-    elseif ($route === 'salvar' || $route === 'salvar.php') {
+    elseif ($route === 'salvar') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->store();
     }
 
-    elseif ($route === 'editar' || $route === 'editar.php') {
+    elseif ($route === 'editar') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->edit();
     }
 
-    elseif ($route === 'atualizar' || $route === 'atualizar.php') {
+    elseif ($route === 'atualizar') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->update();
     }
 
-    elseif ($route === 'pendentes' || $route === 'pendentes.php') {
+    elseif ($route === 'pendentes') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->pending();
     }
 
-    elseif ($route === 'saida' || $route === 'saida.php') {
+    elseif ($route === 'saida') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->recordSaida();
     }
 
-    elseif ($route === 'deletar' || $route === 'deletar.php') {
+    elseif ($route === 'deletar') {
         $controller = new MovementController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->delete();
     }
 
-    elseif ($route === 'cadastrar_rapido' || $route === 'cadastrar_rapido.php') {
+    elseif ($route === 'cadastrar_rapido') {
         $controller = new ReferenceController();
-        $auth = new AuthController();
-        $auth->requireAuth();
         $controller->createQuick();
-    }
-
-    elseif ($route === 'login' || $route === 'login.php' || $route === 'login') {
-        // Serve the login page
-        require_once dirname(__DIR__) . '/resources/views/auth/login.php';
     }
 
     else {

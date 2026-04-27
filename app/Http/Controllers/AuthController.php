@@ -40,7 +40,7 @@ class AuthController extends BaseController
             }
 
             Logger::warning('Login attempt failed for CPF: ' . $cpf);
-            echo "<script>alert('CPF ou Senha incorretos!'); window.location.href='login.php';</script>";
+            echo "<script>alert('CPF ou Senha incorretos!'); window.location.href='/caderno/login';</script>";
         }
     }
 
@@ -48,13 +48,13 @@ class AuthController extends BaseController
     {
         $this->authService->endSession();
         Logger::info('User logged out');
-        $this->redirect('login.php');
+        $this->redirect('/caderno/login');
     }
 
     public function requireAuth(): void
     {
         if (!$this->authService->isAuthenticated()) {
-            $this->redirect('login.php');
+            $this->redirect('/caderno/login');
         }
     }
 

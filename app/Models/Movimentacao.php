@@ -31,20 +31,39 @@ class Movimentacao extends BaseModel
         $params = [];
 
         if (!empty($filters['search'])) {
-            $where .= " AND (i.patrimonio LIKE :search OR l.nome LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $where .= " AND (i.patrimonio LIKE ? OR l.nome LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
         }
 
         if (!empty($filters['date'])) {
-            $where .= " AND DATE(i.data_entrada) = :date";
-            $params['date'] = $filters['date'];
+            $where .= " AND (DATE(i.data_entrada) = ? OR DATE(i.data_saida) = ?)";
+            $params[] = $filters['date'];
+            $params[] = $filters['date'];
         }
 
-        $orderBy = $filters['orderBy'] ?? 'i.id_itens';
+        // Mapping of column names to table-qualified columns for safe ordering
+        $orderByMapping = [
+            'patrimonio' => 'i.patrimonio',
+            'tipo' => 'm.tipo',
+            'entrada' => 'i.data_entrada',
+            'saida' => 'i.data_saida',
+            'local' => 'l.nome',
+            'usuario' => 'u.nome',
+            'id_itens' => 'i.id_itens',
+            'id_movimentacao' => 'm.id_movimentacao',
+        ];
+
+        $orderByInput = $filters['orderBy'] ?? 'i.id_itens';
+        $orderBy = $orderByMapping[$orderByInput] ?? 'i.id_itens';
         $direction = ($filters['direction'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC';
 
         $sql = "SELECT DISTINCT m.*, 
                        GROUP_CONCAT(i.patrimonio) as patrimonios,
+                       MIN(i.data_entrada) as data_entrada,
+                       MIN(i.data_saida) as data_saida,
+                       m.assinatura as assinatura,
                        l.nome as local_nome, 
                        u.nome as usuario_nome
                 FROM {$this->table} m
@@ -54,17 +73,13 @@ class Movimentacao extends BaseModel
                 {$where}
                 GROUP BY m.id_movimentacao
                 ORDER BY {$orderBy} {$direction}
-                LIMIT :limit OFFSET :offset";
+                LIMIT ? OFFSET ?";
+
+        $params[] = $limit;
+        $params[] = $offset;
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
-        }
-
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -74,13 +89,16 @@ class Movimentacao extends BaseModel
         $params = [];
 
         if (!empty($filters['search'])) {
-            $where .= " AND (i.patrimonio LIKE :search OR l.nome LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $where .= " AND (i.patrimonio LIKE ? OR l.nome LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
         }
 
         if (!empty($filters['date'])) {
-            $where .= " AND DATE(i.data_entrada) = :date";
-            $params['date'] = $filters['date'];
+            $where .= " AND (DATE(i.data_entrada) = ? OR DATE(i.data_saida) = ?)";
+            $params[] = $filters['date'];
+            $params[] = $filters['date'];
         }
 
         $sql = "SELECT COUNT(*) as total FROM movimentacao_itens i
@@ -89,10 +107,7 @@ class Movimentacao extends BaseModel
                 {$where}";
 
         $stmt = $this->pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
-        }
-        $stmt->execute();
+        $stmt->execute($params);
 
         return (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     }

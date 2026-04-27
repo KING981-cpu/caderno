@@ -70,7 +70,7 @@ curl http://localhost
 ✅ Verify: `docker-compose ps`
 
 ### Database tables missing
-✅ Fix: `docker exec db_caderno mysql -u root -p4uB5@S6SdLz caderno < database/init.sql`
+✅ Fix: `docker exec db_caderno mysql -u root -p"${MYSQL_ROOT_PASSWORD}" caderno < database/init.sql`
 
 ### Port 80 already in use
 ✅ Change in `docker-compose.yml`:
@@ -86,12 +86,13 @@ Then access at http://localhost:8080
 
 **Default user:**
 - Username: Admin
-- Password: 123
+- User: `Admin`
+- Password: Set via secure environment variable
 
 **Database:**
 - Host: db (internal), localhost (external)
 - User: root
-- Password: 4uB5@S6SdLz (in .env)
+- Database Password: Set `MYSQL_ROOT_PASSWORD` environment variable (use strong password in production)
 - Database: caderno
 
 ---

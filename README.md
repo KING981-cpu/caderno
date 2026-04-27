@@ -46,8 +46,8 @@ http://localhost/
 ```
 
 **Credenciais de Teste:**
-- CPF: `123`
-- Senha: `123`
+- CPF: seu_cpf_de_teste
+- Senha: sua_senha_de_teste
 
 ## 📁 Estrutura de Diretórios
 

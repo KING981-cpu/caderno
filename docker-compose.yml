@@ -12,7 +12,7 @@ services:
       - DB_HOST=db
       - DB_NAME=${MYSQL_DATABASE:-caderno}
       - DB_USER=${DB_USER:-root}
-      - DB_PASS=${DB_PASS:-4uB5@S6SdLz}
+      - DB_PASS=${DB_PASS:?Error: DB_PASS environment variable must be set}
       - APP_ENV=development
       - APP_DEBUG=true
       - LOG_PATH=/var/log/caderno/app.log
@@ -32,7 +32,7 @@ services:
     container_name: db_caderno
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-4uB5@S6SdLz}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Error: MYSQL_ROOT_PASSWORD environment variable must be set}"
       MYSQL_DATABASE: "${MYSQL_DATABASE:-caderno}"
     volumes:
       - ./db_data:/var/lib/mysql

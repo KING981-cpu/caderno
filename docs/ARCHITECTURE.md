@@ -152,7 +152,7 @@ Redirect to index.php
 DB_HOST=db
 DB_NAME=caderno
 DB_USER=root
-DB_PASS=password
+DB_PASS=your_database_password_here
 APP_ENV=production
 APP_DEBUG=false
 TIMEZONE=America/Sao_Paulo
@@ -184,7 +184,7 @@ $count = $movement->getTotalCount($filters);
 Services are instantiated in controllers:
 ```php
 $authService = new AuthService();
-$authenticated = $authService->authenticate($cpf, $password);
+$authenticated = $authService->authenticate($cpf, $passwordFromEnvironment);
 ```
 
 ## Testing Considerations
@@ -203,7 +203,7 @@ $authenticated = $authService->authenticate($cpf, $password);
 class AuthServiceTest {
     public function testAuthenticate() {
         $service = new AuthService();
-        $user = $service->authenticate('123', 'password');
+        $user = $service->authenticate('123', 'secure_password_from_env');
         $this->assertNotNull($user);
     }
 }

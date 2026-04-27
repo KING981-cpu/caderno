@@ -20,7 +20,7 @@ Edit `.env` with your settings:
 DB_HOST=db
 DB_NAME=caderno
 DB_USER=root
-DB_PASS=your_secure_password
+DB_PASS=your_secure_password_here
 APP_ENV=development
 APP_DEBUG=true
 ```
@@ -52,7 +52,8 @@ curl http://localhost/health
 # Login with test account
 # URL: http://localhost/login
 # CPF: 123
-# Senha: 123
+# User: Admin
+# Password: Set via secure environment variable
 ```
 
 ## Development Environment
@@ -136,7 +137,7 @@ APP_DEBUG=false
 DB_HOST=production-db-host
 DB_NAME=caderno
 DB_USER=secure_user
-DB_PASS=very_secure_password
+DB_PASS=production_secure_password
 LOG_PATH=/var/log/caderno/app.log
 TIMEZONE=America/Sao_Paulo
 ```

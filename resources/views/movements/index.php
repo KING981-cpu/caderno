@@ -84,14 +84,21 @@ if (file_exists($headerPath)) {
         <tbody>
             <?php foreach ($movements ?? [] as $row): ?>
                 <?php
-                $entrada = "---";
-                $assinatura = "---";
+                $entrada = (!empty($row['data_entrada']) && $row['data_entrada'] !== '0000-00-00')
+                    ? date('d/m/Y', strtotime($row['data_entrada']))
+                    : '---';
+                $saida = (!empty($row['data_saida']) && $row['data_saida'] !== '0000-00-00')
+                    ? date('d/m/Y', strtotime($row['data_saida']))
+                    : '---';
+                $assinatura = (!empty($row['assinatura']) && $row['assinatura'] !== '0')
+                    ? "<img src='" . e($row['assinatura']) . "' class='img-assinatura' onclick='ampliarAssinatura(this.src)'>"
+                    : '---';
                 ?>
                 <tr>
                     <td><strong><?php echo e($row['patrimonios'] ?? ''); ?></strong></td>
                     <td><span class='badge-tipo'><?php echo e($row['tipo'] ?? ''); ?></span></td>
                     <td><?php echo $entrada; ?></td>
-                    <td>---</td>
+                    <td><?php echo $saida; ?></td>
                     <td><?php echo e($row['local_nome'] ?? ''); ?></td>
                     <td><?php echo e($row['usuario_nome'] ?? ''); ?></td>
                     <td><?php echo $assinatura; ?></td>

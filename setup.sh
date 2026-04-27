@@ -34,7 +34,7 @@ docker-compose up -d
 # Wait for database to be ready
 echo "⏳ Waiting for database to be ready..."
 for i in {1..30}; do
-    if docker exec db_caderno mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-4uB5@S6SdLz}" &> /dev/null; then
+    if docker exec db_caderno mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD}" &> /dev/null; then
         echo "✅ Database is ready!"
         break
     fi
@@ -49,12 +49,12 @@ done
 
 # Verify tables were created
 echo "🔍 Verifying database tables..."
-TABLES=$(docker exec db_caderno mysql -u root -p"${MYSQL_ROOT_PASSWORD:-4uB5@S6SdLz}" caderno -e "SHOW TABLES;" 2>/dev/null | wc -l)
+TABLES=$(docker exec db_caderno mysql -u root -p"${MYSQL_ROOT_PASSWORD}" caderno -e "SHOW TABLES;" 2>/dev/null | wc -l)
 if [ "$TABLES" -gt 1 ]; then
     echo "✅ Database tables created successfully!"
 else
     echo "⚠️  No tables found. Running manual init..."
-    docker exec db_caderno mysql -u root -p"${MYSQL_ROOT_PASSWORD:-4uB5@S6SdLz}" caderno < database/init.sql
+    docker exec db_caderno mysql -u root -p"${MYSQL_ROOT_PASSWORD}" caderno < database/init.sql
 fi
 
 # Check application health
@@ -70,7 +70,7 @@ echo ""
 echo "✨ Setup complete!"
 echo "🌐 Access the application at: http://localhost"
 echo "📚 Database: caderno"
-echo "👤 Default user: Admin / 123"
+echo "👤 Default user: Admin (use credentials configured in your environment)"
 echo ""
 echo "To stop: docker-compose down"
 echo "To view logs: docker-compose logs -f"

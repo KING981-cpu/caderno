@@ -9,12 +9,20 @@ RUN a2enmod rewrite
 # Configure Apache for clean URLs
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    chmod +x /usr/local/bin/composer
+
 # Create application directories first (before COPY)
 RUN mkdir -p /var/www/html && \
     mkdir -p /var/log/caderno
 
 # Copy application files
 COPY . /var/www/html/
+
+# Install PHP dependencies with Composer
+WORKDIR /var/www/html
+RUN composer install --no-interaction --no-dev --optimize-autoloader 2>&1 | grep -v "^$" || true
 
 # Set the document root to public/ (after COPY so path exists)
 RUN sed -i 's|DocumentRoot /var/www/html$|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \

@@ -45,6 +45,9 @@ class Movimentacao extends BaseModel
 
         $sql = "SELECT DISTINCT m.*, 
                        GROUP_CONCAT(i.patrimonio) as patrimonios,
+                       GROUP_CONCAT(i.id_itens) as itens_ids,
+                       MIN(i.data_entrada) as data_entrada,
+                       MIN(i.data_saida) as data_saida,
                        l.nome as local_nome, 
                        u.nome as usuario_nome
                 FROM {$this->table} m

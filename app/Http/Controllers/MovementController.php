@@ -174,9 +174,9 @@ class MovementController extends BaseController
 
     public function recordSaida(): void
     {
-        $patrimonio = $this->request->get('id_item');
+        $patrimonio = trim((string)$this->request->get('id_item', ''));
         if (!$patrimonio) {
-            echo "Patrimônio não especificado.";
+            $this->view('movements/saida', ['patrimonio' => null]);
             return;
         }
 
@@ -184,12 +184,17 @@ class MovementController extends BaseController
             $dataSaida = $this->request->get('data_saida');
 
             try {
-                $this->movementService->recordSaida($patrimonio, $dataSaida);
-                Logger::info('Saida recorded via controller', ['patrimonio' => $patrimonio]);
-                $this->redirect('/');
+                $result = $this->movementService->recordSaida($patrimonio, $dataSaida);
+                if ($result) {
+                    Logger::info('Saida recorded via controller', ['patrimonio' => $patrimonio]);
+                    $this->redirect('/');
+                } else {
+                    Logger::error('Patrimonio not found or already has saida', ['patrimonio' => $patrimonio]);
+                    $this->view('movements/saida', ['patrimonio' => $patrimonio, 'error' => 'Patrimônio não encontrado ou saída já registrada']);
+                }
             } catch (\Exception $e) {
                 Logger::error('Saida recording failed: ' . $e->getMessage());
-                echo "Erro ao registrar saída: " . htmlspecialchars($e->getMessage());
+                $this->view('movements/saida', ['patrimonio' => $patrimonio, 'error' => 'Erro ao registrar saída: ' . $e->getMessage()]);
             }
         } else {
             $this->view('movements/saida', ['patrimonio' => $patrimonio]);

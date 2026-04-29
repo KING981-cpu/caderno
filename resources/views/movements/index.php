@@ -21,12 +21,14 @@ if (file_exists($headerPath)) {
         input[type="text"], input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
         button { padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-clear { background: #95a5a6; text-decoration: none; color: white; padding: 10px 15px; border-radius: 5px; font-size: 13px; }
+        .btn-saida { background: #e67e22; color: white; padding: 10px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-block; }
+        .btn-saida:hover { background: #d35400; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; font-size: 14px; }
         th { background: #f8f9fa; }
         th a { text-decoration: none; color: #333; display: flex; align-items: center; }
         .badge-tipo { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #34495e; color: white; }
-        .img-assinatura { width: 60px; height: auto; border: 1px solid #ddd; cursor: zoom-in; }
+        .img-assinatura { width: 60px; height: auto; border: 1px solid #ddd; cursor: zoom-in; background: #fff; }
         .pagination { margin-top: 20px; display: flex; justify-content: center; gap: 5px; }
         .pagination a { padding: 8px 15px; border: 1px solid #ddd; color: #27ae60; text-decoration: none; border-radius: 4px; }
         .pagination a.active { background: #27ae60; color: white; border-color: #27ae60; }
@@ -35,7 +37,10 @@ if (file_exists($headerPath)) {
 <body>
 
 <div class="container">
-    <h2>Consultar Movimentações</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Consultar Movimentações</h2>
+        <a href="cadastro" style="background: #27ae60; color: white; padding: 10px 25px; border-radius: 5px; text-decoration: none; font-weight: bold;">+ Nova Entrada</a>
+    </div>
     
     <div class="search-container">
         <form method="GET" class="search-row">
@@ -84,20 +89,44 @@ if (file_exists($headerPath)) {
         <tbody>
             <?php foreach ($movements ?? [] as $row): ?>
                 <?php
+                // Formata data de entrada
                 $entrada = "---";
+                if (!empty($row['data_entrada']) && $row['data_entrada'] !== '0000-00-00') {
+                    $entrada = date('d/m/Y', strtotime($row['data_entrada']));
+                }
+
+                // Formata data de saída e gera botão se vazio
+                $saida = "---";
+                // Extrai o primeiro patrimônio para usar no botão de saída
+                $patrimonios_lista = array_filter(array_map('trim', explode(',', $row['patrimonios'] ?? '')));
+                $primeiro_patrimonio = reset($patrimonios_lista) ?: null;
+                
+                if (!empty($row['data_saida']) && $row['data_saida'] !== '0000-00-00' && $row['data_saida'] !== null) {
+                    $saida = date('d/m/Y', strtotime($row['data_saida']));
+                } else {
+                    // Gera botão para registrar saída
+                    if (!empty($primeiro_patrimonio)) {
+                        $saida = "<form method='GET' action='saida' style='display:inline;'><input type='hidden' name='id_item' value='" . htmlspecialchars($primeiro_patrimonio) . "'><button type='submit' class='btn-saida'>Registrar Saída</button></form>";
+                    }
+                }
+
+                // Formata assinatura
                 $assinatura = "---";
+                if (!empty($row['assinatura']) && $row['assinatura'] !== "0" && $row['assinatura'] !== null) {
+                    $assinatura = "<img src='{$row['assinatura']}' class='img-assinatura' onclick='ampliarAssinatura(this.src)' alt='Assinatura'>";
+                }
                 ?>
                 <tr>
                     <td><strong><?php echo e($row['patrimonios'] ?? ''); ?></strong></td>
                     <td><span class='badge-tipo'><?php echo e($row['tipo'] ?? ''); ?></span></td>
                     <td><?php echo $entrada; ?></td>
-                    <td>---</td>
+                    <td><?php echo $saida; ?></td>
                     <td><?php echo e($row['local_nome'] ?? ''); ?></td>
                     <td><?php echo e($row['usuario_nome'] ?? ''); ?></td>
                     <td><?php echo $assinatura; ?></td>
                     <td>
                         <a href='editar?id=<?php echo $row['id_movimentacao']; ?>' style='color:#2980b9; text-decoration:none;'>Editar</a> | 
-                        <a href='deletar?id_item=<?php echo $row['id_movimentacao']; ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
+                        <a href='deletar?id_item=<?php echo reset(explode(',', $row['itens_ids'] ?? '')); ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

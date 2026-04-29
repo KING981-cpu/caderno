@@ -16,15 +16,24 @@
 
 <div class="box">
     <h2>Registrar Saída</h2>
-    <p>Patrimônio: <strong><?php echo htmlspecialchars($patrimonio); ?></strong></p>
+    <?php if (!empty($error)): ?>
+        <p style="color: #e74c3c; font-weight: bold; margin-bottom: 20px;">⚠️ <?php echo htmlspecialchars($error); ?></p>
+    <?php endif; ?>
     
-    <form method="POST">
-        <label>Data da Saída:</label>
-        <input type="date" name="data_saida" value="<?php echo date('Y-m-d'); ?>" required>
-        <button type="submit">Confirmar Saída</button>
-        <br><br>
-        <a href="index" style="text-decoration: none; text-align: center; display: block;">Cancelar</a>
-    </form>
+    <?php if (!empty($patrimonio)): ?>
+        <p>Patrimônio: <strong><?php echo htmlspecialchars($patrimonio); ?></strong></p>
+        
+        <form method="POST">
+            <label>Data da Saída:</label>
+            <input type="date" name="data_saida" value="<?php echo date('Y-m-d'); ?>" required>
+            <button type="submit">Confirmar Saída</button>
+            <br><br>
+            <a href="index" style="text-decoration: none; text-align: center; display: block;">Cancelar</a>
+        </form>
+    <?php else: ?>
+        <p style="color: #e74c3c; font-weight: bold;">Erro: Patrimônio não especificado!</p>
+        <a href="index" style="text-decoration: none; text-align: center; display: block; margin-top: 20px; color: #2980b9;">Voltar</a>
+    <?php endif; ?>
 </div>
 
 </body>

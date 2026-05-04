@@ -53,10 +53,10 @@ $stmt_total->execute();
 $total_registros = $stmt_total->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 $total_paginas = ceil($total_registros / $limite);
 
-// Função para links de cabeçalho
+// Função para gerar links de ordenação mantendo os filtros
 function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $seta, $data) {
     $icone = ($ordemAtual === $coluna) ? $seta : '';
-    return "<th><a href='?ordem=$coluna&direcao=$proxima&busca=".urlencode($busca)."&limite=$limite&data_pesquisa=$data'>$label$icone</a></th>";
+    return "<th><a href='?ordem=$coluna&direcao=$proxima&busca=$busca&limite=$limite&data_pesquisa=$data'>$label$icone</a></th>";
 }
 ?>
 
@@ -66,21 +66,28 @@ function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $set
     <meta charset="UTF-8">
     <title>Caderno Digital - Pesquisa</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
         .search-container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef; }
         .search-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
         .search-group { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
         .search-group label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
-        input[type="text"], input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        
+        input[type="text"], input[type="date"] { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
         button { padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-clear { background: #95a5a6; text-decoration: none; color: white; padding: 10px 15px; border-radius: 5px; font-size: 13px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; font-size: 14px; }
         th { background: #f8f9fa; }
-        th a { text-decoration: none; color: #333; display: flex; align-items: center; }
-        .badge-tipo { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #34495e; color: white; }
-        .img-assinatura { width: 60px; height: auto; border: 1px solid #ddd; cursor: zoom-in; }
+        th a { text-decoration: none; color: #333; display: flex; align-items: center; width: 100%; }
+        th a:hover { color: #27ae60; }
+        
+        tr:hover { background: #f1f1f1; }
+        .badge-tipo { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; background: #34495e; color: white; }
+        .img-assinatura { width: 60px; height: auto; border: 1px solid #ddd; cursor: zoom-in; background: #fff; }
+        
         .pagination { margin-top: 20px; display: flex; justify-content: center; gap: 5px; }
         .pagination a { padding: 8px 15px; border: 1px solid #ddd; color: #27ae60; text-decoration: none; border-radius: 4px; }
         .pagination a.active { background: #27ae60; color: white; border-color: #27ae60; }
@@ -90,19 +97,21 @@ function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $set
 
 <div class="container">
     <?php include 'header.php'; ?>
+    
     <h2>Consultar Movimentações</h2>
     
     <div class="search-container">
         <form method="GET" class="search-row">
             <div class="search-group">
                 <label>Patrimônio / Localidade:</label>
-                <input type="text" name="busca" placeholder="Buscar..." value="<?php echo e($busca_termo); ?>">
+                <input type="text" name="busca" placeholder="Digite para buscar..." value="<?php echo $busca_termo; ?>">
             </div>
+            
             <div class="search-group" style="flex: 0;">
-                <label>Data:</label>
-                <input type="date" name="data_pesquisa" value="<?php echo e($data_pesquisa); ?>">
+                <label>Data Específica:</label>
+                <input type="date" name="data_pesquisa" value="<?php echo $data_pesquisa; ?>">
             </div>
-            <input type="hidden" name="limite" value="<?php echo $limite; ?>">
+
             <button type="submit">Pesquisar</button>
             <a href="index.php" class="btn-clear">Limpar</a>
         </form>
@@ -110,11 +119,10 @@ function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $set
 
     <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
         <span>Total: <strong><?php echo $total_registros; ?></strong> registros</span>
-        
         <form method="GET">
-            <input type="hidden" name="busca" value="<?php echo e($busca_termo); ?>">
-            <input type="hidden" name="data_pesquisa" value="<?php echo e($data_pesquisa); ?>">
-            <label style="font-size: 13px; font-weight: bold;">Mostrar: </label>
+            <input type="hidden" name="busca" value="<?php echo $busca_termo; ?>">
+            <input type="hidden" name="data_pesquisa" value="<?php echo $data_pesquisa; ?>">
+            <label style="font-size: 13px;">Mostrar: </label>
             <select name="limite" onchange="this.form.submit()">
                 <option value="10" <?php if($limite==10) echo 'selected'; ?>>10</option>
                 <option value="50" <?php if($limite==50) echo 'selected'; ?>>50</option>

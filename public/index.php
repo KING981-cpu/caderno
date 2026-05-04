@@ -1,113 +1,208 @@
-<?php
-// Public entry point for the application
-require_once dirname(__DIR__) . '/vendor/autoload.php';
-require_once dirname(__DIR__) . '/config/bootstrap.php';
+<?php 
+include dirname(__DIR__) . '/config.php'; 
 
-use App\Http\Controllers\MovementController;
-use App\Http\Controllers\EquipmentController;
-use App\Http\Controllers\ReferenceController;
-use App\Http\Controllers\HealthController;
-use App\SRE\Logger;
+// --- 1. LÓGICA DE PAGINAÇÃO ---
+$limite = isset($_GET['limite']) ? (int)$_GET['limite'] : 10;
+$pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+if ($pagina < 1) $pagina = 1;
+$inicio = ($pagina - 1) * $limite;
 
-// Get the requested path
-$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+// --- 2. FILTROS DE BUSCA ---
+$busca_termo = $_GET['busca'] ?? '';
+$data_pesquisa = $_GET['data_pesquisa'] ?? '';
 
-// Detect base path dynamically - handle both /caderno/ and / (Docker deployment)
-$basePath = '/';
-if (strpos($requestPath, '/caderno/') === 0) {
-    $basePath = '/caderno/';
+$busca_param = "%" . $busca_termo . "%";
+$filtro_sql = "";
+
+// Filtro por data exata (ignora a hora se o campo for datetime)
+if (!empty($data_pesquisa)) {
+    $filtro_sql = " AND DATE(i.data_entrada) = ?";
 }
 
-$route = str_replace($basePath, '', $requestPath);
+// --- 3. LÓGICA DE ORDENAÇÃO ---
+$colunas_permitidas = [
+    'patrimonio' => 'i.patrimonio',
+    'tipo'       => 'm.tipo',
+    'entrada'    => 'i.data_entrada',
+    'saida'      => 'i.data_saida',
+    'local'      => 'l.nome',
+    'usuario'    => 'u.nome'
+];
 
-// Remove trailing slash and .php extension
-$route = rtrim($route, '/');
-if (substr($route, -4) === '.php') {
-    $route = substr($route, 0, -4);
+$ordem = isset($_GET['ordem']) && array_key_exists($_GET['ordem'], $colunas_permitidas) ? $_GET['ordem'] : 'm.id_movimentacao';
+$direcao = isset($_GET['direcao']) && strtoupper($_GET['direcao']) === 'ASC' ? 'ASC' : 'DESC';
+$proxima_direcao = ($direcao === 'ASC') ? 'DESC' : 'ASC';
+$seta = ($direcao === 'ASC') ? ' ▲' : ' ▼';
+
+// --- 4. CONTAGEM TOTAL (Para Paginação) ---
+$sql_total = "SELECT COUNT(*) as total FROM movimentacao_itens i
+              JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
+              JOIN localidade l ON m.localidade = l.id_localidade
+              JOIN usuario u ON m.usuario = u.id_usuario
+              WHERE (i.patrimonio LIKE ? OR l.nome LIKE ?)";
+              
+if (!empty($data_pesquisa)) {
+    $sql_total .= " AND DATE(i.data_entrada) = ?";
 }
 
-// Route the request
-try {
-    // Health check endpoint
-    if ($route === 'health') {
-        $controller = new HealthController();
-        $controller->check();
-    }
-
-    // API routes for equipment
-    elseif (strpos($route, 'api/equipamentos') === 0) {
-        $controller = new EquipmentController();
-        if ($controller->request->isGet()) {
-            $controller->list();
-        } elseif ($controller->request->isPost()) {
-            $controller->store();
-        }
-    }
-
-    elseif (strpos($route, 'api/equipamento') === 0) {
-        $controller = new EquipmentController();
-        if ($controller->request->isGet()) {
-            $controller->get();
-        } elseif ($controller->request->isPut() || $controller->request->isPatch()) {
-            $controller->update();
-        } elseif ($controller->request->isDelete()) {
-            $controller->delete();
-        }
-    }
-
-    // Movement routes
-    elseif ($route === 'index' || $route === '') {
-        $controller = new MovementController();
-        $controller->index();
-    }
-
-    elseif ($route === 'cadastro') {
-        $controller = new MovementController();
-        $controller->create();
-    }
-
-    elseif ($route === 'salvar') {
-        $controller = new MovementController();
-        $controller->store();
-    }
-
-    elseif ($route === 'editar') {
-        $controller = new MovementController();
-        $controller->edit();
-    }
-
-    elseif ($route === 'atualizar') {
-        $controller = new MovementController();
-        $controller->update();
-    }
-
-    elseif ($route === 'pendentes') {
-        $controller = new MovementController();
-        $controller->pending();
-    }
-
-    elseif ($route === 'saida') {
-        $controller = new MovementController();
-        $controller->recordSaida();
-    }
-
-    elseif ($route === 'deletar') {
-        $controller = new MovementController();
-        $controller->delete();
-    }
-
-    elseif ($route === 'cadastrar_rapido') {
-        $controller = new ReferenceController();
-        $controller->createQuick();
-    }
-
-    else {
-        // 404 Not Found
-        http_response_code(404);
-        echo json_encode(['error' => 'Route not found: ' . $requestPath]);
-    }
-} catch (\Exception $e) {
-    Logger::error('Route handling error: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+$stmt_total = $pdo->prepare($sql_total);
+$params_array = [$busca_param, $busca_param];
+if (!empty($data_pesquisa)) {
+    $params_array[] = $data_pesquisa;
 }
+$stmt_total->execute($params_array);
+$total_registros = $stmt_total->fetch(PDO::FETCH_ASSOC)['total'];
+$total_paginas = ceil($total_registros / $limite);
+
+// Função para gerar links de ordenação mantendo os filtros
+function linkOrdem($coluna, $label, $ordemAtual, $proxima, $busca, $limite, $seta, $data) {
+    $icone = ($ordemAtual === $coluna) ? $seta : '';
+    return "<th><a href='?ordem=$coluna&direcao=$proxima&busca=$busca&limite=$limite&data_pesquisa=$data'>$label$icone</a></th>";
+}
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Caderno Digital - Pesquisa</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .search-container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+        .search-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+        .search-group { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
+        .search-group label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
+        
+        input[type="text"], input[type="date"] { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-clear { background: #95a5a6; text-decoration: none; color: white; padding: 10px 15px; border-radius: 5px; font-size: 13px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; font-size: 14px; }
+        th { background: #f8f9fa; }
+        th a { text-decoration: none; color: #333; display: flex; align-items: center; width: 100%; }
+        th a:hover { color: #27ae60; }
+        
+        tr:hover { background: #f1f1f1; }
+        .badge-tipo { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; background: #34495e; color: white; }
+        .img-assinatura { width: 60px; height: auto; border: 1px solid #ddd; cursor: zoom-in; background: #fff; }
+        
+        .pagination { margin-top: 20px; display: flex; justify-content: center; gap: 5px; }
+        .pagination a { padding: 8px 15px; border: 1px solid #ddd; color: #27ae60; text-decoration: none; border-radius: 4px; }
+        .pagination a.active { background: #27ae60; color: white; border-color: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <?php include 'header.php'; ?>
+    
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="cadastro.php" style="padding: 10px 20px; background: #27ae60; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">+ Novo Patrimônio</a>
+        <a href="index.php" style="padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">📋 Todos</a>
+        <a href="pendentes.php" style="padding: 10px 20px; background: #e67e22; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">⚠️ Pendentes (Não Saíram)</a>
+    </div>
+    
+    <h2>Consultar Movimentações</h2>
+    
+    <div class="search-container">
+        <form method="GET" class="search-row">
+            <div class="search-group">
+                <label>Patrimônio / Localidade:</label>
+                <input type="text" name="busca" placeholder="Digite para buscar..." value="<?php echo $busca_termo; ?>">
+            </div>
+            
+            <div class="search-group" style="flex: 0;">
+                <label>Data Específica:</label>
+                <input type="date" name="data_pesquisa" value="<?php echo $data_pesquisa; ?>">
+            </div>
+
+            <button type="submit">Pesquisar</button>
+            <a href="index.php" class="btn-clear">Limpar</a>
+        </form>
+    </div>
+
+    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <span>Total: <strong><?php echo $total_registros; ?></strong> registros</span>
+        <form method="GET">
+            <input type="hidden" name="busca" value="<?php echo $busca_termo; ?>">
+            <input type="hidden" name="data_pesquisa" value="<?php echo $data_pesquisa; ?>">
+            <label style="font-size: 13px;">Mostrar: </label>
+            <select name="limite" onchange="this.form.submit()">
+                <option value="10" <?php if($limite==10) echo 'selected'; ?>>10</option>
+                <option value="50" <?php if($limite==50) echo 'selected'; ?>>50</option>
+                <option value="100" <?php if($limite==100) echo 'selected'; ?>>100</option>
+            </select>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <?php echo linkOrdem('patrimonio', 'Patrimônio', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <?php echo linkOrdem('tipo', 'Tipo', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <?php echo linkOrdem('entrada', 'Entrada', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <?php echo linkOrdem('saida', 'Saída', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <?php echo linkOrdem('local', 'Localidade', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <?php echo linkOrdem('usuario', 'Usuário', $ordem, $proxima_direcao, $busca_termo, $limite, $seta, $data_pesquisa); ?>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $coluna_sql = $colunas_permitidas[$ordem] ?? 'm.id_movimentacao';
+            $sql = "SELECT i.id_itens, i.patrimonio, i.data_entrada, i.data_saida, m.id_movimentacao, 
+                           m.tipo, m.observacao, l.nome as local, u.nome as user
+                    FROM movimentacao_itens i
+                    JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
+                    JOIN localidade l ON m.localidade = l.id_localidade
+                    JOIN usuario u ON m.usuario = u.id_usuario
+                    WHERE (i.patrimonio LIKE ? OR l.nome LIKE ?) $filtro_sql
+                    ORDER BY $coluna_sql $direcao
+                    LIMIT ? OFFSET ?"; 
+            
+            $stmt = $pdo->prepare($sql);
+            $params_data = [$busca_param, $busca_param];
+            if (!empty($data_pesquisa)) {
+                $params_data[] = $data_pesquisa;
+            }
+            $params_data[] = (int)$limite;
+            $params_data[] = (int)$inicio;
+            $stmt->execute($params_data);
+
+            while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $entrada = ($row['data_entrada']) ? date('d/m/Y', strtotime($row['data_entrada'])) : "---";
+                $saida = ($row['data_saida'] && $row['data_saida'] != '0000-00-00') 
+                         ? date('d/m/Y', strtotime($row['data_saida'])) 
+                         : "<a href='saida.php?id_item={$row['id_itens']}' style='color:#e67e22; text-decoration:none; font-weight:bold;'>Registrar</a>";
+
+                echo "<tr>
+                        <td><strong>{$row['patrimonio']}</strong></td>
+                        <td><span class='badge-tipo'>{$row['tipo']}</span></td>
+                        <td>{$entrada}</td>
+                        <td>{$saida}</td>
+                        <td>{$row['local']}</td>
+                        <td>{$row['user']}</td>
+                        <td>
+                            <a href='editar.php?id={$row['id_movimentacao']}' style='color:#2980b9; text-decoration:none; font-weight:bold;'>Editar</a> | 
+                            <a href='deletar.php?id_item={$row['id_itens']}' style='color:#e74c3c; text-decoration:none; font-weight:bold;' onclick='return confirm(\"Excluir apenas este item?\")'>Excluir</a>
+                        </td>
+                      </tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <?php for($i = 1; $i <= $total_paginas; $i++): ?>
+            <a href="?pagina=<?php echo $i; ?>&busca=<?php echo $busca_termo; ?>&limite=<?php echo $limite; ?>&ordem=<?php echo $ordem; ?>&direcao=<?php echo $direcao; ?>&data_pesquisa=<?php echo $data_pesquisa; ?>" 
+               class="<?php echo ($i == $pagina) ? 'active' : ''; ?>"><?php echo $i; ?></a>
+        <?php endfor; ?>
+    </div>
+</div>
+
+
+</body>
+</html>

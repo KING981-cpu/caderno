@@ -2,4 +2,5 @@
     <a href="index" style="color: white; text-decoration: none; font-weight: bold;">🔍 Pesquisar/Início</a>
     <a href="cadastro" style="color: white; text-decoration: none; font-weight: bold;">➕ Novo Registro</a>
     <a href="pendentes" style="color: white; text-decoration: none; font-weight: bold;">📦 Itens Pendentes</a>
+    <a href="lixeira" style="color: white; text-decoration: none; font-weight: bold;">🗑️ Lixeira</a>
 </nav>

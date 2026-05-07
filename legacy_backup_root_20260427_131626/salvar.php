@@ -16,6 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pat_brutos = $_POST['patrimonio'] ?? '';
         $assinatura = $_POST['assinatura_data'] ?? null; // Recebe a imagem Base64
 
+        $lista = array_filter(array_map('trim', explode(',', $pat_brutos)));
+        if (empty($lista)) {
+            throw new Exception('Informe ao menos um patrimônio.');
+        }
+
+        if (count($lista) !== count(array_unique($lista))) {
+            throw new Exception('Há patrimônios duplicados na mesma entrada.');
+        }
+
+        $stmtCheck = $pdo->prepare("SELECT id_itens FROM movimentacao_itens WHERE patrimonio = :pat AND ativo = 1 LIMIT 1");
+        foreach ($lista as $pat) {
+            $stmtCheck->execute(['pat' => $pat]);
+            if ($stmtCheck->fetch()) {
+                throw new Exception("O patrimônio '{$pat}' já existe em um registro ativo.");
+            }
+        }
+
         // 2. Inserir na tabela 'movimentacao' (Cabeçalho com Assinatura)
         $sqlMov = "INSERT INTO movimentacao (observacao, localidade, usuario, tipo, assinatura) 
                    VALUES (:obs, :local, :user, :tipo, :assinatura)";

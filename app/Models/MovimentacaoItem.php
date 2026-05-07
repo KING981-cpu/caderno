@@ -71,6 +71,20 @@ class MovimentacaoItem extends BaseModel
         return $stmt->execute(['id' => $id]);
     }
 
+    public function getDeletedItems(): array
+    {
+        $sql = "SELECT i.id_itens, i.patrimonio, i.data_entrada, i.data_saida, m.id_movimentacao, m.tipo, m.assinatura, l.nome as local, u.nome as user
+                FROM {$this->table} i
+                JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
+                LEFT JOIN localidade l ON m.localidade = l.id_localidade
+                LEFT JOIN usuario u ON m.usuario = u.id_usuario
+                WHERE i.ativo = 0
+                ORDER BY i.data_entrada DESC";
+
+        $stmt = $this->pdo->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getFullDetails($id): ?array
     {
         $sql = "SELECT i.id_itens, i.patrimonio, i.data_entrada, i.data_saida, 

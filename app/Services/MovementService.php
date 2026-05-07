@@ -19,6 +19,21 @@ class MovementService
 
     public function create(array $data): ?int
     {
+        $patrimonios = array_filter(array_map('trim', explode(',', $data['patrimonio'] ?? '')));
+        if (empty($patrimonios)) {
+            throw new \Exception('Informe ao menos um patrimônio.');
+        }
+
+        if (count($patrimonios) !== count(array_unique($patrimonios))) {
+            throw new \Exception('Há patrimônios duplicados na mesma entrada.');
+        }
+
+        foreach ($patrimonios as $patrimonio) {
+            if ($this->itemModel->findByPatrimonio($patrimonio)) {
+                throw new \Exception("O patrimônio '{$patrimonio}' já está cadastrado ativo.");
+            }
+        }
+
         try {
             $pdo = \App\Core\Database::getInstance();
             $pdo->beginTransaction();
@@ -36,12 +51,8 @@ class MovementService
             $columnDate = ($data['tipo'] ?? 'Entrada') === 'Entrada' ? 'data_entrada' : 'data_saida';
             $dateValue = $data['data'] ?? date('Y-m-d');
 
-            $patrimonios = explode(',', $data['patrimonio'] ?? '');
             foreach ($patrimonios as $patrimonio) {
-                $patrimonio = trim($patrimonio);
-                if (!empty($patrimonio)) {
-                    $this->itemModel->createWithMovimentacao($movId, $patrimonio, $columnDate, $dateValue);
-                }
+                $this->itemModel->createWithMovimentacao($movId, $patrimonio, $columnDate, $dateValue);
             }
 
             $pdo->commit();
@@ -102,6 +113,16 @@ class MovementService
             return $this->movModel->getPendingItems();
         } catch (\Exception $e) {
             Logger::error('Failed to get pending items: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getDeletedItems(): array
+    {
+        try {
+            return $this->itemModel->getDeletedItems();
+        } catch (\Exception $e) {
+            Logger::error('Failed to get deleted items: ' . $e->getMessage());
             return [];
         }
     }

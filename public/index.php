@@ -86,6 +86,11 @@ try {
         $controller->pending();
     }
 
+    elseif ($route === 'lixeira') {
+        $controller = new MovementController();
+        $controller->trash();
+    }
+
     elseif ($route === 'saida') {
         $controller = new MovementController();
         $controller->recordSaida();

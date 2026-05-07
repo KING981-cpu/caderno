@@ -34,7 +34,7 @@
         <label>Patrimônio:</label>
         <textarea name="patrimonio" required placeholder="Ex: 101, 102"></textarea>
         <label>Data:</label>
-        <input type="date" name="entrada" required value="<?php echo date('Y-m-d'); ?>">
+        <input type="date" name="data" required value="<?php echo date('Y-m-d'); ?>">
 
         <label>Localidade:</label>
         <div id="localidades-container"></div>

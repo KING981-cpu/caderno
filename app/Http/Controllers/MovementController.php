@@ -183,6 +183,14 @@ class MovementController extends BaseController
         $this->view('movements/pending', ['items' => $items]);
     }
 
+    public function trash(): void
+    {
+        $items = $this->movementService->getDeletedItems();
+        Logger::info('Trash viewed', ['count' => count($items)]);
+
+        $this->view('movements/lixeira', ['items' => $items]);
+    }
+
     public function recordSaida(): void
     {
         $patrimonio = $this->request->get('id_item');

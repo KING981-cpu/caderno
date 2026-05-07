@@ -84,20 +84,25 @@ if (file_exists($headerPath)) {
         <tbody>
             <?php foreach ($movements ?? [] as $row): ?>
                 <?php
-                $entrada = "---";
-                $assinatura = "---";
+                $entrada = ($row['data_entrada']) ? date('d/m/Y', strtotime($row['data_entrada'])) : "---";
+                $saida = ($row['data_saida'] && $row['data_saida'] !== '0000-00-00')
+                         ? date('d/m/Y', strtotime($row['data_saida']))
+                         : "---";
+                $assinatura = (!empty($row['assinatura']) && $row['assinatura'] !== "0")
+                              ? "<img src='" . $row['assinatura'] . "' class='img-assinatura' onclick='ampliarAssinatura(this.src)'>"
+                              : "---";
                 ?>
                 <tr>
-                    <td><strong><?php echo e($row['patrimonios'] ?? ''); ?></strong></td>
+                    <td><strong><?php echo e($row['patrimonio'] ?? ''); ?></strong></td>
                     <td><span class='badge-tipo'><?php echo e($row['tipo'] ?? ''); ?></span></td>
                     <td><?php echo $entrada; ?></td>
-                    <td>---</td>
+                    <td><?php echo $saida; ?></td>
                     <td><?php echo e($row['local_nome'] ?? ''); ?></td>
                     <td><?php echo e($row['usuario_nome'] ?? ''); ?></td>
                     <td><?php echo $assinatura; ?></td>
                     <td>
                         <a href='editar?id=<?php echo $row['id_movimentacao']; ?>' style='color:#2980b9; text-decoration:none;'>Editar</a> | 
-                        <a href='deletar?id_item=<?php echo $row['id_movimentacao']; ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
+                        <a href='deletar?id_item=<?php echo $row['id_itens']; ?>' style='color:#e74c3c; text-decoration:none;' onclick='return confirm("Excluir item?")'>Excluir</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

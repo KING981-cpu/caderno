@@ -43,16 +43,12 @@ class Movimentacao extends BaseModel
         $orderBy = $filters['orderBy'] ?? 'i.id_itens';
         $direction = ($filters['direction'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC';
 
-        $sql = "SELECT DISTINCT m.*, 
-                       GROUP_CONCAT(i.patrimonio) as patrimonios,
-                       l.nome as local_nome, 
-                       u.nome as usuario_nome
+        $sql = "SELECT i.id_itens, i.patrimonio, i.data_entrada, i.data_saida, m.id_movimentacao, m.tipo, m.assinatura, l.nome as local_nome, u.nome as usuario_nome
                 FROM {$this->table} m
                 LEFT JOIN movimentacao_itens i ON m.id_movimentacao = i.movimentacao
                 LEFT JOIN localidade l ON m.localidade = l.id_localidade
                 LEFT JOIN usuario u ON m.usuario = u.id_usuario
                 {$where}
-                GROUP BY m.id_movimentacao
                 ORDER BY {$orderBy} {$direction}
                 LIMIT :limit OFFSET :offset";
 

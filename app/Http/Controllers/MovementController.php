@@ -34,14 +34,25 @@ class MovementController extends BaseController
             $filters['date'] = $date;
         }
 
-        $order = $this->request->get('ordem', 'id_itens');
+        $orderKey = $this->request->get('ordem', 'id_itens');
         $direction = $this->request->get('direcao', 'DESC');
 
         if ($direction !== 'ASC' && $direction !== 'DESC') {
             $direction = 'DESC';
         }
 
-        $filters['orderBy'] = $order;
+        $orderColumns = [
+            'patrimonio' => 'i.patrimonio',
+            'tipo' => 'm.tipo',
+            'entrada' => 'i.data_entrada',
+            'saida' => 'i.data_saida',
+            'local' => 'l.nome',
+            'usuario' => 'u.nome',
+            'id_itens' => 'i.id_itens',
+            'id_movimentacao' => 'm.id_movimentacao',
+        ];
+
+        $filters['orderBy'] = $orderColumns[$orderKey] ?? 'i.id_itens';
         $filters['direction'] = $direction;
 
         $result = $this->movementService->list($page, $limit, $filters);
@@ -56,7 +67,7 @@ class MovementController extends BaseController
             'pages' => $result['pages'],
             'search' => $search,
             'date' => $date,
-            'order' => $order,
+            'order' => $orderKey,
             'direction' => $direction,
         ];
 

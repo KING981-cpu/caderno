@@ -22,7 +22,15 @@ class Request
 
     public function get(string $key, $default = null)
     {
-        return $this->data[$key] ?? $default;
+        if (isset($this->data[$key])) {
+            return $this->data[$key];
+        }
+
+        if (isset($_GET[$key])) {
+            return $_GET[$key];
+        }
+
+        return $default;
     }
 
     public function all(): array

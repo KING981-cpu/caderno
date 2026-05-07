@@ -19,6 +19,7 @@
     <p>Patrimônio: <strong><?php echo htmlspecialchars($patrimonio); ?></strong></p>
     
     <form method="POST">
+        <input type="hidden" name="id_item" value="<?php echo htmlspecialchars($patrimonio); ?>">
         <label>Data da Saída:</label>
         <input type="date" name="data_saida" value="<?php echo date('Y-m-d'); ?>" required>
         <button type="submit">Confirmar Saída</button>

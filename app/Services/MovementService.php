@@ -28,9 +28,30 @@ class MovementService
             throw new \Exception('Há patrimônios duplicados na mesma entrada.');
         }
 
+        $tipo = $data['tipo'] ?? 'Entrada';
+        $dateValue = $data['data'] ?? date('Y-m-d');
+
         foreach ($patrimonios as $patrimonio) {
-            if ($this->itemModel->findByPatrimonio($patrimonio)) {
-                throw new \Exception("O patrimônio '{$patrimonio}' já está cadastrado ativo.");
+            $last = $this->itemModel->findByPatrimonio($patrimonio);
+            if ($last) {
+                if ($tipo === 'Entrada') {
+                    if (empty($last['data_saida']) || $last['data_saida'] === '0000-00-00') {
+                        throw new \Exception("O patrimônio '{$patrimonio}' ainda não saiu. Registre a saída antes da nova entrada.");
+                    }
+                    if (!empty($last['data_saida']) && $last['data_saida'] > $dateValue) {
+                        throw new \Exception("A entrada do patrimônio '{$patrimonio}' não pode ser anterior à última saída ({$last['data_saida']}).");
+                    }
+                } else {
+                    if (empty($last['data_entrada']) || $last['data_entrada'] === '0000-00-00') {
+                        throw new \Exception("Não há registro de entrada pendente para o patrimônio '{$patrimonio}'.");
+                    }
+                    if (!empty($last['data_saida']) && $last['data_saida'] !== '0000-00-00') {
+                        throw new \Exception("O patrimônio '{$patrimonio}' já tem saída registrada. Registre uma nova entrada antes de uma nova saída.");
+                    }
+                    if ($last['data_entrada'] > $dateValue) {
+                        throw new \Exception("A saída do patrimônio '{$patrimonio}' não pode ser anterior à entrada ({$last['data_entrada']}).");
+                    }
+                }
             }
         }
 
@@ -95,8 +116,22 @@ class MovementService
 
     public function recordSaida(string $patrimonio, string $dataSaida): bool
     {
+        $dateObj = \DateTime::createFromFormat('Y-m-d', $dataSaida);
+        if (!$dateObj || $dateObj->format('Y-m-d') !== $dataSaida) {
+            throw new \Exception('Data de saída inválida.');
+        }
+
+        $item = $this->itemModel->findOpenByPatrimonio($patrimonio);
+        if (!$item) {
+            throw new \Exception('Não há registro de entrada aberto para este patrimônio.');
+        }
+
+        if (!empty($item['data_entrada']) && $item['data_entrada'] > $dataSaida) {
+            throw new \Exception('A saída não pode ser anterior à data de entrada.');
+        }
+
         try {
-            $success = $this->itemModel->updateDateSaida($patrimonio, $dataSaida);
+            $success = $this->itemModel->updateDateSaidaById((int)$item['id_itens'], $dataSaida);
             if ($success) {
                 Logger::info('Saida recorded', ['patrimonio' => $patrimonio]);
             }

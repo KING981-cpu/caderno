@@ -32,7 +32,7 @@
         <select name="tipo"><option value="Entrada">Entrada</option><option value="Saída">Saída</option></select>
         <label>Patrimônio:</label>
         <textarea name="patrimonio" required placeholder="Ex: 101, 102"></textarea>
-        <label>Data:</label>
+        <label id="label_data">Data de Entrada:</label>
         <input type="date" name="entrada" required value="<?php echo date('Y-m-d'); ?>">
 
         <label>Localidade:</label>
@@ -108,6 +108,14 @@
 
     iniciarBusca('busca_local', 'lista_local', 'id_localidade', localidades);
     iniciarBusca('busca_user', 'lista_user', 'id_usuario', usuarios);
+
+    const tipoSelect = document.querySelector('select[name="tipo"]');
+    const labelData = document.getElementById('label_data');
+    function atualizarLabelData() {
+        labelData.textContent = tipoSelect.value === 'Saída' ? 'Data da Saída:' : 'Data de Entrada:';
+    }
+    tipoSelect.addEventListener('change', atualizarLabelData);
+    atualizarLabelData();
 
     const canvas = document.getElementById('signature-pad');
     const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });

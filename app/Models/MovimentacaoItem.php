@@ -28,13 +28,43 @@ class MovimentacaoItem extends BaseModel
         $sql = "SELECT i.*, m.tipo, m.assinatura, l.nome as local, u.nome as user
                 FROM {$this->table} i
                 JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
-                JOIN localidade l ON m.localidade = l.id_localidade
-                JOIN usuario u ON m.usuario = u.id_usuario
-                WHERE i.patrimonio = :pat AND i.ativo = 1 LIMIT 1";
+                LEFT JOIN localidade l ON m.localidade = l.id_localidade
+                LEFT JOIN usuario u ON m.usuario = u.id_usuario
+                WHERE i.patrimonio = :pat AND i.ativo = 1
+                ORDER BY i.id_itens DESC
+                LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['pat' => $patrimonio]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function findOpenByPatrimonio(string $patrimonio): ?array
+    {
+        $sql = "SELECT i.id_itens, i.patrimonio, i.data_entrada, i.data_saida, m.tipo
+                FROM {$this->table} i
+                JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
+                WHERE i.patrimonio = :pat AND i.ativo = 1
+                  AND (i.data_saida IS NULL OR i.data_saida = '0000-00-00')
+                ORDER BY i.id_itens DESC
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['pat' => $patrimonio]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function updateDateSaidaById(int $id, string $dataSaida): bool
+    {
+        $sql = "UPDATE {$this->table}
+                SET data_saida = :data
+                WHERE id_itens = :id AND ativo = 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            'data' => $dataSaida,
+            'id' => $id
+        ]);
     }
 
     public function createWithMovimentacao(int $movId, string $patrimonio, string $columnDate, string $dateValue): int|string

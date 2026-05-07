@@ -25,11 +25,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception('Há patrimônios duplicados na mesma entrada.');
         }
 
-        $stmtCheck = $pdo->prepare("SELECT id_itens FROM movimentacao_itens WHERE patrimonio = :pat AND ativo = 1 LIMIT 1");
+        $dataObj = DateTime::createFromFormat('Y-m-d', $data_valor);
+        if (!$dataObj || $dataObj->format('Y-m-d') !== $data_valor) {
+            throw new Exception('Data inválida.');
+        }
+
+        $stmtCheck = $pdo->prepare("SELECT data_entrada, data_saida FROM movimentacao_itens WHERE patrimonio = :pat AND ativo = 1 ORDER BY id_itens DESC LIMIT 1");
         foreach ($lista as $pat) {
+            $pat = trim($pat);
+            if ($pat === '') {
+                continue;
+            }
+
             $stmtCheck->execute(['pat' => $pat]);
-            if ($stmtCheck->fetch()) {
-                throw new Exception("O patrimônio '{$pat}' já existe em um registro ativo.");
+            $last = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if ($tipo === 'Entrada') {
+                if ($last && (empty($last['data_saida']) || $last['data_saida'] === '0000-00-00')) {
+                    throw new Exception("O patrimônio '{$pat}' ainda não saiu. Registre a saída antes de uma nova entrada.");
+                }
+                if ($last && !empty($last['data_saida']) && $last['data_saida'] > $data_valor) {
+                    throw new Exception("A entrada do patrimônio '{$pat}' não pode ser anterior à última saída ({$last['data_saida']}).");
+                }
+            } else {
+                if (!$last || empty($last['data_entrada']) || $last['data_entrada'] === '0000-00-00') {
+                    throw new Exception("Não há registro de entrada pendente para o patrimônio '{$pat}'.");
+                }
+                if (!empty($last['data_saida']) && $last['data_saida'] !== '0000-00-00') {
+                    throw new Exception("O patrimônio '{$pat}' já está com saída registrada. Registre uma nova entrada antes de outra saída.");
+                }
+                if ($last['data_entrada'] > $data_valor) {
+                    throw new Exception("A saída do patrimônio '{$pat}' não pode ser anterior à entrada ({$last['data_entrada']}).");
+                }
             }
         }
 

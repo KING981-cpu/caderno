@@ -13,18 +13,30 @@ $patrimonio = $_GET['id_item'];
 // 2. Se o formulário for enviado (POST)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
-        $data_saida = $_POST['data_saida'];
-        
-        // ATUALIZAÇÃO: Vamos colocar a data de saída onde o patrimônio coincidir 
-        // e a data de saída ainda estiver vazia
+        $data_saida = $_POST['data_saida'] ?? '';
+        $dataObj = DateTime::createFromFormat('Y-m-d', $data_saida);
+        if (!$dataObj || $dataObj->format('Y-m-d') !== $data_saida) {
+            throw new Exception('Data de saída inválida.');
+        }
+
+        $stmtCheck = $pdo->prepare("SELECT id_itens, data_entrada FROM movimentacao_itens WHERE patrimonio = :pat AND ativo = 1 AND (data_saida IS NULL OR data_saida = '0000-00-00') ORDER BY id_itens DESC LIMIT 1");
+        $stmtCheck->execute(['pat' => $patrimonio]);
+        $item = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if (!$item) {
+            throw new Exception('Não foi encontrado um registro de entrada aberto para este patrimônio.');
+        }
+        if (!empty($item['data_entrada']) && $item['data_entrada'] > $data_saida) {
+            throw new Exception('A saída não pode ser anterior à data de entrada.');
+        }
+
         $sql = "UPDATE movimentacao_itens 
                 SET data_saida = :data 
-                WHERE patrimonio = :pat AND (data_saida IS NULL OR data_saida = '0000-00-00')";
-        
+                WHERE id_itens = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             'data' => $data_saida,
-            'pat'  => $patrimonio
+            'id'   => $item['id_itens']
         ]);
 
         echo "<script>alert('Saída registrada com sucesso!'); window.location.href='index.php';</script>";

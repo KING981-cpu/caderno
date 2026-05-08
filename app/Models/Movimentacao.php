@@ -104,7 +104,8 @@ class Movimentacao extends BaseModel
                 JOIN movimentacao m ON i.movimentacao = m.id_movimentacao
                 JOIN localidade l ON m.localidade = l.id_localidade
                 JOIN usuario u ON m.usuario = u.id_usuario
-                WHERE (i.data_saida IS NULL OR i.data_saida = '0000-00-00')
+                WHERE i.ativo = 1
+                AND (i.data_saida IS NULL OR i.data_saida = '0000-00-00')
                 AND (i.data_entrada IS NOT NULL AND i.data_entrada != '0000-00-00')
                 ORDER BY i.data_entrada ASC";
 

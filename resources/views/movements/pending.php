@@ -39,7 +39,11 @@
                     <td><?php echo htmlspecialchars($row['local']); ?></td>
                     <td><?php echo htmlspecialchars($row['user']); ?></td>
                     <td>
-                        <a href='saida?id_item=<?php echo urlencode($row['patrimonio']); ?>' class='btn-saida'>Registrar Saída</a>
+                        <form method="POST" action="saida" style="display:inline;">
+                            <input type="hidden" name="id_item" value="<?php echo htmlspecialchars($row['patrimonio']); ?>">
+                            <input type="hidden" name="data_saida" value="<?php echo date('Y-m-d'); ?>">
+                            <button type="submit" class="btn-saida">Registrar Saída</button>
+                        </form>
                     </td>
                 </tr>
             <?php endforeach; ?>

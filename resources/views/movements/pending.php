@@ -20,6 +20,7 @@
 <div class="container">
     <h2>📦 Itens Atualmente no Setor</h2>
     <p>Estes itens deram entrada, mas a saída ainda não foi registrada.</p>
+    <p>Registre a saída usando "Novo Registro" e escolhendo o tipo <strong>Saída</strong>.</p>
 
     <table>
         <thead>
@@ -28,7 +29,6 @@
                 <th>Data de Entrada</th>
                 <th>Localidade</th>
                 <th>Responsável</th>
-                <th>Ação</th>
             </tr>
         </thead>
         <tbody>
@@ -38,13 +38,6 @@
                     <td class='alerta'><?php echo date('d/m/Y', strtotime($row['data_entrada'])); ?></td>
                     <td><?php echo htmlspecialchars($row['local']); ?></td>
                     <td><?php echo htmlspecialchars($row['user']); ?></td>
-                    <td>
-                        <form method="POST" action="saida" style="display:inline;">
-                            <input type="hidden" name="id_item" value="<?php echo htmlspecialchars($row['patrimonio']); ?>">
-                            <input type="hidden" name="data_saida" value="<?php echo date('Y-m-d'); ?>">
-                            <button type="submit" class="btn-saida">Registrar Saída</button>
-                        </form>
-                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

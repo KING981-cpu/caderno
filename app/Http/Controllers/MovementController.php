@@ -79,11 +79,19 @@ class MovementController extends BaseController
         $localidades = $this->referenceService->getLocalidades();
         $usuarios = $this->referenceService->getUsuarios();
 
+        $tipo = $this->request->get('tipo', 'Entrada');
+        $tipo = in_array($tipo, ['Entrada', 'Saída'], true) ? $tipo : 'Entrada';
+        $patrimonio = $this->request->get('patrimonio', '');
+        $autoDate = $this->request->get('auto_date', '') === '1';
+
         Logger::info('Movement create form accessed');
 
         $this->view('movements/create', [
             'localidades' => $localidades,
             'usuarios' => $usuarios,
+            'defaultTipo' => $tipo,
+            'defaultPatrimonio' => $patrimonio,
+            'autoDate' => $autoDate,
         ]);
     }
 

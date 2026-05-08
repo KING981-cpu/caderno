@@ -1,4 +1,11 @@
-<?php include dirname(__DIR__) . '/includes/header.php'; ?>
+<?php
+include dirname(__DIR__) . '/includes/header.php';
+
+$tipo = $defaultTipo ?? 'Entrada';
+$patrimonio = $defaultPatrimonio ?? '';
+$autoDate = $autoDate ?? false;
+$today = date('Y-m-d');
+?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -29,12 +36,28 @@
 <div class="container">
     <h2 style="text-align: center;">Novo Lançamento</h2>
     <form action="salvar" method="POST" id="formMovimentacao" autocomplete="off">
-        <label>Tipo:</label>
-        <select name="tipo"><option value="Entrada">Entrada</option><option value="Saída">Saída</option></select>
+        <?php if ($autoDate): ?>
+            <input type="hidden" name="tipo" value="Saída">
+            <p><strong>Tipo:</strong> Saída</p>
+        <?php else: ?>
+            <label>Tipo:</label>
+            <select name="tipo">
+                <option value="Entrada" <?php echo $tipo === 'Entrada' ? 'selected' : ''; ?>>Entrada</option>
+                <option value="Saída" <?php echo $tipo === 'Saída' ? 'selected' : ''; ?>>Saída</option>
+            </select>
+        <?php endif; ?>
+
         <label>Patrimônio:</label>
-        <textarea name="patrimonio" required placeholder="Ex: 101, 102"></textarea>
-        <label>Data:</label>
-        <input type="date" name="data" required value="<?php echo date('Y-m-d'); ?>">
+        <textarea name="patrimonio" required placeholder="Ex: 101, 102"><?php echo htmlspecialchars($patrimonio); ?></textarea>
+
+        <?php if ($autoDate): ?>
+            <label>Data:</label>
+            <p><?php echo date('d/m/Y', strtotime($today)); ?></p>
+            <input type="hidden" name="data" value="<?php echo $today; ?>">
+        <?php else: ?>
+            <label>Data:</label>
+            <input type="date" name="data" required value="<?php echo $today; ?>">
+        <?php endif; ?>
 
         <label>Localidade:</label>
         <div id="localidades-container"></div>

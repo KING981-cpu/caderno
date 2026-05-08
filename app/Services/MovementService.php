@@ -31,27 +31,25 @@ class MovementService
         $tipo = $data['tipo'] ?? 'Entrada';
         $dateValue = $data['data'] ?? date('Y-m-d');
 
+        $openEntries = [];
         foreach ($patrimonios as $patrimonio) {
-            $last = $this->itemModel->findByPatrimonio($patrimonio);
-            if ($last) {
-                if ($tipo === 'Entrada') {
-                    if (empty($last['data_saida']) || $last['data_saida'] === '0000-00-00') {
-                        throw new \Exception("O patrimônio '{$patrimonio}' ainda não saiu. Registre a saída antes da nova entrada.");
-                    }
-                    if (!empty($last['data_saida']) && $last['data_saida'] > $dateValue) {
-                        throw new \Exception("A entrada do patrimônio '{$patrimonio}' não pode ser anterior à última saída ({$last['data_saida']}).");
-                    }
-                } else {
-                    if (empty($last['data_entrada']) || $last['data_entrada'] === '0000-00-00') {
-                        throw new \Exception("Não há registro de entrada pendente para o patrimônio '{$patrimonio}'.");
-                    }
-                    if (!empty($last['data_saida']) && $last['data_saida'] !== '0000-00-00') {
-                        throw new \Exception("O patrimônio '{$patrimonio}' já tem saída registrada. Registre uma nova entrada antes de uma nova saída.");
-                    }
-                    if ($last['data_entrada'] > $dateValue) {
-                        throw new \Exception("A saída do patrimônio '{$patrimonio}' não pode ser anterior à entrada ({$last['data_entrada']}).");
-                    }
+            if ($tipo === 'Entrada') {
+                $last = $this->itemModel->findByPatrimonio($patrimonio);
+                if ($last && (empty($last['data_saida']) || $last['data_saida'] === '0000-00-00')) {
+                    throw new \Exception("O patrimônio '{$patrimonio}' ainda não saiu. Registre a saída antes da nova entrada.");
                 }
+                if ($last && !empty($last['data_saida']) && $last['data_saida'] > $dateValue) {
+                    throw new \Exception("A entrada do patrimônio '{$patrimonio}' não pode ser anterior à última saída ({$last['data_saida']}).");
+                }
+            } else {
+                $open = $this->itemModel->findOpenByPatrimonio($patrimonio);
+                if (!$open) {
+                    throw new \Exception("Não há registro de entrada pendente para o patrimônio '{$patrimonio}'.");
+                }
+                if ($open['data_entrada'] > $dateValue) {
+                    throw new \Exception("A saída do patrimônio '{$patrimonio}' não pode ser anterior à entrada ({$open['data_entrada']}).");
+                }
+                $openEntries[$patrimonio] = $open;
             }
         }
 
@@ -73,6 +71,13 @@ class MovementService
             $dateValue = $data['data'] ?? date('Y-m-d');
 
             foreach ($patrimonios as $patrimonio) {
+                if ($tipo === 'Saída') {
+                    $openItem = $openEntries[$patrimonio] ?? null;
+                    if ($openItem) {
+                        $this->itemModel->updateDateSaidaById((int)$openItem['id_itens'], $dateValue);
+                    }
+                }
+
                 $this->itemModel->createWithMovimentacao($movId, $patrimonio, $columnDate, $dateValue);
             }
 

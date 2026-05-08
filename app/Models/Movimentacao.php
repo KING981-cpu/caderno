@@ -31,13 +31,15 @@ class Movimentacao extends BaseModel
         $params = [];
 
         if (!empty($filters['search'])) {
-            $where .= " AND (i.patrimonio LIKE :search OR l.nome LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $where .= " AND (i.patrimonio LIKE :searchPatrimonio OR l.nome LIKE :searchLocal)";
+            $params['searchPatrimonio'] = '%' . $filters['search'] . '%';
+            $params['searchLocal'] = '%' . $filters['search'] . '%';
         }
 
         if (!empty($filters['date'])) {
-            $where .= " AND DATE(i.data_entrada) = :date";
-            $params['date'] = $filters['date'];
+            $where .= " AND (DATE(i.data_entrada) = :dateEntrada OR DATE(i.data_saida) = :dateSaida)";
+            $params['dateEntrada'] = $filters['date'];
+            $params['dateSaida'] = $filters['date'];
         }
 
         $orderBy = $filters['orderBy'] ?? 'i.id_itens';
@@ -70,13 +72,15 @@ class Movimentacao extends BaseModel
         $params = [];
 
         if (!empty($filters['search'])) {
-            $where .= " AND (i.patrimonio LIKE :search OR l.nome LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $where .= " AND (i.patrimonio LIKE :searchPatrimonio OR l.nome LIKE :searchLocal)";
+            $params['searchPatrimonio'] = '%' . $filters['search'] . '%';
+            $params['searchLocal'] = '%' . $filters['search'] . '%';
         }
 
         if (!empty($filters['date'])) {
-            $where .= " AND DATE(i.data_entrada) = :date";
-            $params['date'] = $filters['date'];
+            $where .= " AND (DATE(i.data_entrada) = :dateEntrada OR DATE(i.data_saida) = :dateSaida)";
+            $params['dateEntrada'] = $filters['date'];
+            $params['dateSaida'] = $filters['date'];
         }
 
         $sql = "SELECT COUNT(*) as total FROM movimentacao_itens i
